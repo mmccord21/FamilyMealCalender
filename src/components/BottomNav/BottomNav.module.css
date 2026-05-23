@@ -1,0 +1,40 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(253, 248, 240, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--bdr);
+  display: flex;
+  padding: 8px 0 calc(env(safe-area-inset-bottom, 0px) + 4px);
+  z-index: 50;
+}
+
+.btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.icon {
+  font-size: 22px;
+  transition: transform 0.15s;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--mu);
+}
+
+.on .label { color: var(--terra); }
+.on .icon  { transform: scale(1.12); }

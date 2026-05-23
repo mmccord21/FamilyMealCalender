@@ -1,0 +1,63 @@
+.view {
+  padding: 16px 15px calc(env(safe-area-inset-bottom, 0px) + 84px);
+}
+
+.searchBox {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--bdr);
+  background: var(--sur);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--br);
+  outline: none;
+  margin-bottom: 14px;
+}
+.searchBox:focus { border-color: var(--gold); }
+
+.list {
+  margin-bottom: 10px;
+}
+
+.recipeCard {
+  background: var(--sur);
+  border-radius: 14px;
+  border: 1px solid var(--bdr);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.recipeCard:active { background: #fbf5ee; }
+
+.rcEmoji { font-size: 26px; flex-shrink: 0; }
+.rcInfo  { flex: 1; min-width: 0; }
+.rcName  { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 2px; }
+.rcMeta  { font-size: 12px; color: var(--mu); }
+.rcPrice { font-size: 14px; font-weight: 600; color: var(--sage); flex-shrink: 0; }
+
+.addRecipeCard {
+  background: none;
+  border: 2px dashed var(--bdr);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  cursor: pointer;
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 10px;
+}
+.addRecipeCard:active { background: #fbf5ee; }
+
+.arcIcon { font-size: 22px; color: var(--gold); }
+.arcLbl  { font-size: 14px; font-weight: 500; color: var(--mu); }
+
+.emptyState { text-align: center; padding: 40px 20px; color: var(--mu); }
+.emptyStateIcon { font-size: 48px; margin-bottom: 12px; }
+.emptyStateTxt  { font-size: 14px; line-height: 1.5; }

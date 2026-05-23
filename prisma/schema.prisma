@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model Recipe {
+  id          String       @id @default(cuid())
+  userId      String
+  emoji       String
+  name        String
+  sub         String?
+  tags        String[]
+  color       String       @default("#888888")
+  ingredients Ingredient[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Ingredient {
+  id       String  @id @default(cuid())
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId String
+  name     String
+  qty      Float
+  unit     String?
+  cat      String  // proteins | produce | dairy | pantry
+  store    String  // sprouts | costco
+  noScale  Boolean @default(false)
+}
+
+model WeekEntry {
+  id       String  @id @default(cuid())
+  userId   String
+  dayKey   String  // Mon | Tue | Wed | Thu | Fri | Sat | Sun
+  weekYear Int
+  weekNum  Int
+  type     String  // empty | meal | note
+  recipeId String?
+  guests   Int?
+  note     String?
+
+  @@unique([userId, dayKey, weekYear, weekNum])
+}
+
+model RecurringMeal {
+  id       String  @id @default(cuid())
+  userId   String
+  key      String  // brunch | lunch
+  label    String
+  recipeId String?
+
+  @@unique([userId, key])
+}
+
+model IngredientPrice {
+  id     String @id @default(cuid())
+  userId String
+  name   String // lowercase key
+  price  Float
+
+  @@unique([userId, name])
+}
+
+model ShoppingCheck {
+  id       String  @id @default(cuid())
+  userId   String
+  itemKey  String  // lowercase ingredient name
+  checked  Boolean @default(false)
+  weekYear Int
+  weekNum  Int
+
+  @@unique([userId, itemKey, weekYear, weekNum])
+}

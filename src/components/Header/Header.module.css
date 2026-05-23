@@ -1,0 +1,58 @@
+.hdr {
+  background: var(--br);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 18px 14px;
+  flex-shrink: 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: 21px;
+  font-weight: 400;
+  color: #fdf8f0;
+  line-height: 1.2;
+}
+
+.sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+}
+
+.budget {
+  background: var(--sage);
+  border-radius: 13px;
+  padding: 9px 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.budgetNum {
+  font-family: 'Playfair Display', serif;
+  font-size: 21px;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.budgetLabel {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 2px;
+}

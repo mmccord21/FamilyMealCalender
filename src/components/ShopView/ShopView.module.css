@@ -1,0 +1,50 @@
+.view { padding: 16px 15px calc(env(safe-area-inset-bottom, 0px) + 84px); }
+
+.filterRow { display: flex; gap: 7px; margin-bottom: 13px; }
+.sfBtn { flex: 1; border: 1.5px solid var(--bdr); background: var(--sur); border-radius: 10px; padding: 8px 4px; font-size: 12px; font-weight: 600; color: var(--mu); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; text-align: center; }
+.sfBtn.on { border-color: var(--sage); color: var(--sage); background: #eef5ef; }
+
+.shopHdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 13px; flex-wrap: wrap; gap: 6px; }
+.prog { font-size: 13px; color: var(--mu); }
+.prog strong { color: var(--sage); }
+.btnSm { font-size: 12px; background: none; border: 1.5px solid; border-radius: 8px; padding: 5px 11px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btnC { color: var(--sage); border-color: var(--sage); }
+.btnR { color: var(--mu); border-color: var(--bdr); }
+
+.catSec { margin-bottom: 24px; }
+.catHdr { display: flex; align-items: center; gap: 7px; padding-bottom: 9px; margin-bottom: 2px; border-bottom: 2px solid; }
+.catIcon { font-size: 17px; }
+.catLbl { font-family: 'Playfair Display', serif; font-size: 18px; }
+
+.sItem { display: flex; align-items: flex-start; gap: 11px; padding: 12px 0; border-bottom: 1px solid var(--bdr); cursor: pointer; transition: opacity 0.15s; }
+.sItem:last-child { border-bottom: none; }
+.sItem.done { opacity: 0.35; }
+.sItem.done .iName { text-decoration: line-through; }
+
+.chk { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0; margin-top: 1px; border: 2px solid #d4c4b4; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.chkOn { background: var(--sage); border-color: var(--sage); }
+.chkMark { color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
+
+.iInfo { flex: 1; min-width: 0; }
+.iName { font-size: 14.5px; font-weight: 500; }
+.iAmt { font-size: 12.5px; color: var(--mu); margin-top: 1px; }
+
+.iChips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.mChip { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; color: #fff; }
+.sharedChip { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--sage); background: #eef5ef; padding: 2px 7px; border-radius: 100px; }
+.storeS { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #3a6b42; background: #eef5ef; }
+.storeC { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #1a4fa0; background: #eef3ff; }
+
+.iRight { flex-shrink: 0; margin-top: 1px; }
+.priceBadge { font-size: 13px; color: var(--mu); background: #f5efe8; border-radius: 6px; padding: 3px 8px; cursor: pointer; border: 1px solid transparent; display: block; }
+.priceBadge:active { border-color: var(--terra); }
+.priceSet { color: var(--terra); font-weight: 600; }
+.priceNone { color: #ccc; }
+
+.totalBar { background: var(--br); border-radius: 15px; padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.tLbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+.tSub { font-size: 11px; color: rgba(255, 255, 255, 0.28); margin-top: 3px; }
+.tNum { font-family: 'Playfair Display', serif; font-size: 30px; color: #fff; }
+
+.shopEmpty { text-align: center; padding: 40px 20px; color: var(--mu); }
+.shopEmptyIcon { font-size: 40px; margin-bottom: 10px; }

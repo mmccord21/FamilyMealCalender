@@ -1,0 +1,105 @@
+import type { Recipe, Ingredient } from '@/types';
+
+const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
+  {
+    emoji: '🍳', name: 'Smoked Salmon Frittata',
+    sub: 'capers, cream cheese & fresh dill',
+    tags: ['keto', 'crowd-pleaser'], color: '#C47A4A',
+    ingredients: [
+      { id: 'a1', recipeId: 'dr1', name: 'Eggs, large', qty: 8, unit: '', cat: 'dairy', store: 'costco', noScale: false },
+      { id: 'a2', recipeId: 'dr1', name: 'Smoked salmon', qty: 4, unit: 'oz', cat: 'proteins', store: 'sprouts', noScale: false },
+      { id: 'a3', recipeId: 'dr1', name: 'Cream cheese', qty: 4, unit: 'oz', cat: 'dairy', store: 'sprouts', noScale: false },
+      { id: 'a4', recipeId: 'dr1', name: 'Capers', qty: 2, unit: 'tbsp', cat: 'pantry', store: 'sprouts', noScale: true },
+      { id: 'a5', recipeId: 'dr1', name: 'Fresh dill', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'a6', recipeId: 'dr1', name: 'Shallots', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'a7', recipeId: 'dr1', name: 'Lemon', qty: 1, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+    ],
+  },
+  {
+    emoji: '🥗', name: 'Greek Chicken Bowls',
+    sub: 'romaine, feta, olives & tzatziki',
+    tags: ['keto', 'meal-prep'], color: '#4A7A52',
+    ingredients: [
+      { id: 'b1', recipeId: 'dr2', name: 'Chicken thighs, bone-in', qty: 2, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'b2', recipeId: 'dr2', name: 'Romaine lettuce', qty: 1, unit: 'head', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'b3', recipeId: 'dr2', name: 'Cucumber', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'b4', recipeId: 'dr2', name: 'Cherry tomatoes', qty: 1, unit: 'pint', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'b5', recipeId: 'dr2', name: 'Feta cheese', qty: 6, unit: 'oz', cat: 'dairy', store: 'sprouts', noScale: false },
+      { id: 'b6', recipeId: 'dr2', name: 'Kalamata olives', qty: 1, unit: 'cup', cat: 'pantry', store: 'sprouts', noScale: true },
+      { id: 'b7', recipeId: 'dr2', name: 'Full-fat Greek yogurt', qty: 1, unit: 'cup', cat: 'dairy', store: 'costco', noScale: false },
+      { id: 'b8', recipeId: 'dr2', name: 'Garlic', qty: 3, unit: 'cloves', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'b9', recipeId: 'dr2', name: 'Fresh dill', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'b10', recipeId: 'dr2', name: 'Lemon', qty: 1, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+    ],
+  },
+  {
+    emoji: '🐟', name: 'Sheet Pan Salmon',
+    sub: 'asparagus & lemon herb butter',
+    tags: ['keto', '30 min'], color: '#4A6FA5',
+    ingredients: [
+      { id: 'c1', recipeId: 'dr3', name: 'Salmon fillets', qty: 1.5, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'c2', recipeId: 'dr3', name: 'Asparagus', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'c3', recipeId: 'dr3', name: 'Butter, unsalted', qty: 4, unit: 'tbsp', cat: 'dairy', store: 'costco', noScale: true },
+      { id: 'c4', recipeId: 'dr3', name: 'Lemon', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'c5', recipeId: 'dr3', name: 'Garlic', qty: 3, unit: 'cloves', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'c6', recipeId: 'dr3', name: 'Fresh parsley', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: true },
+    ],
+  },
+  {
+    emoji: '🍗', name: 'Tuscan Butter Chicken',
+    sub: 'sun-dried tomatoes, spinach & cream',
+    tags: ['keto'], color: '#A0652A',
+    ingredients: [
+      { id: 'd1', recipeId: 'dr4', name: 'Chicken thighs, bone-in', qty: 2, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'd2', recipeId: 'dr4', name: 'Baby spinach', qty: 3, unit: 'oz', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'd3', recipeId: 'dr4', name: 'Sun-dried tomatoes in oil', qty: 1, unit: 'jar', cat: 'pantry', store: 'sprouts', noScale: true },
+      { id: 'd4', recipeId: 'dr4', name: 'Heavy cream', qty: 1, unit: 'cup', cat: 'dairy', store: 'costco', noScale: false },
+      { id: 'd5', recipeId: 'dr4', name: 'Butter, unsalted', qty: 2, unit: 'tbsp', cat: 'dairy', store: 'costco', noScale: true },
+      { id: 'd6', recipeId: 'dr4', name: 'Garlic', qty: 4, unit: 'cloves', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'd7', recipeId: 'dr4', name: 'Shallots', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+    ],
+  },
+  {
+    emoji: '🍔', name: 'Lettuce Wrap Smash Burgers',
+    sub: 'special sauce, avocado & sharp cheddar',
+    tags: ['keto', 'fun night'], color: '#B54A2A',
+    ingredients: [
+      { id: 'e1', recipeId: 'dr5', name: 'Ground beef, 80/20', qty: 1.5, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'e2', recipeId: 'dr5', name: 'Sharp cheddar', qty: 4, unit: 'oz', cat: 'dairy', store: 'sprouts', noScale: false },
+      { id: 'e3', recipeId: 'dr5', name: 'Avocados', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'e4', recipeId: 'dr5', name: 'Romaine lettuce', qty: 1, unit: 'head', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'e5', recipeId: 'dr5', name: 'Dijon mustard', qty: 2, unit: 'tbsp', cat: 'pantry', store: 'sprouts', noScale: true },
+    ],
+  },
+  {
+    emoji: '🥩', name: 'Ribeye & Chimichurri',
+    sub: 'roasted zucchini & garlic herb butter',
+    tags: ['keto', 'date night'], color: '#8B3A2A',
+    ingredients: [
+      { id: 'f1', recipeId: 'dr6', name: 'Ribeye steaks', qty: 2, unit: '', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'f2', recipeId: 'dr6', name: 'Zucchini', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'f3', recipeId: 'dr6', name: 'Butter, unsalted', qty: 2, unit: 'tbsp', cat: 'dairy', store: 'costco', noScale: true },
+      { id: 'f4', recipeId: 'dr6', name: 'Garlic', qty: 4, unit: 'cloves', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'f5', recipeId: 'dr6', name: 'Fresh parsley', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'f6', recipeId: 'dr6', name: 'Lemon', qty: 1, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'f7', recipeId: 'dr6', name: 'Red wine vinegar', qty: 2, unit: 'tbsp', cat: 'pantry', store: 'sprouts', noScale: true },
+    ],
+  },
+  {
+    emoji: '🦐', name: 'Coconut Curry Shrimp',
+    sub: 'cauliflower rice & fresh herbs',
+    tags: ['keto'], color: '#6A4A8A',
+    ingredients: [
+      { id: 'g1', recipeId: 'dr7', name: 'Large shrimp, peeled', qty: 1, unit: 'lb', cat: 'proteins', store: 'costco', noScale: false },
+      { id: 'g2', recipeId: 'dr7', name: 'Cauliflower', qty: 1, unit: 'head', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'g3', recipeId: 'dr7', name: 'Full-fat coconut milk', qty: 1, unit: 'can', cat: 'pantry', store: 'sprouts', noScale: true },
+      { id: 'g4', recipeId: 'dr7', name: 'Red curry paste', qty: 2, unit: 'tbsp', cat: 'pantry', store: 'sprouts', noScale: true },
+      { id: 'g5', recipeId: 'dr7', name: 'Zucchini', qty: 1, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+      { id: 'g6', recipeId: 'dr7', name: 'Fresh cilantro', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'g7', recipeId: 'dr7', name: 'Garlic', qty: 3, unit: 'cloves', cat: 'produce', store: 'sprouts', noScale: true },
+      { id: 'g8', recipeId: 'dr7', name: 'Avocados', qty: 1, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
+    ],
+  },
+];
+
+export default DEF_RECIPES;

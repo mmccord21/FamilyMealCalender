@@ -25,7 +25,7 @@ export default function Header({ total }: Props) {
             <div className={styles.budgetLabel}>Est. Week</div>
           </div>
           {isLoaded && isSignedIn && (
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           )}
           {isLoaded && !isSignedIn && (
             <SignInButton mode="modal">

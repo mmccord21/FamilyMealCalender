@@ -1,13 +1,14 @@
 'use client';
 
 import styles from './Header.module.css';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { SignInButton, UserButton, useAuth } from '@clerk/nextjs';
 
 interface Props {
   total: number;
 }
 
 export default function Header({ total }: Props) {
+  const { isLoaded, isSignedIn } = useAuth();
   return (
     <header className={styles.hdr}>
       <div className={styles.row}>
@@ -23,14 +24,14 @@ export default function Header({ total }: Props) {
             <div className={styles.budgetNum}>${total}</div>
             <div className={styles.budgetLabel}>Est. Week</div>
           </div>
-          <SignedIn>
+          {isLoaded && isSignedIn && (
             <UserButton afterSignOutUrl="/" />
-          </SignedIn>
-          <SignedOut>
+          )}
+          {isLoaded && !isSignedIn && (
             <SignInButton mode="modal">
               <button style={{ background: 'var(--sage)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Sign In</button>
             </SignInButton>
-          </SignedOut>
+          )}
         </div>
       </div>
     </header>

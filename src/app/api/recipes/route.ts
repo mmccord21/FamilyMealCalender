@@ -21,27 +21,33 @@ export async function POST(request: Request) {
 
   if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
-  const recipe = await prisma.recipe.create({
-    data: {
-      userId,
-      emoji: emoji || '🍽️',
-      name,
-      sub: sub || '',
-      tags: tags || [],
-      color: color || '#888888',
-      ingredients: {
-        create: (ingredients || []).map((ing: any) => ({
-          name: ing.name,
-          qty: Number(ing.qty) || 0,
-          unit: ing.unit || '',
-          cat: ing.cat || 'pantry',
-          store: ing.store || 'sprouts',
-          noScale: !!ing.noScale,
-        })),
+  try {
+    const recipe = await prisma.recipe.create({
+      data: {
+        userId,
+        emoji: emoji || '🍽️',
+        name,
+        sub: sub || '',
+        tags: tags || [],
+        color: color || '#888888',
+        ingredients: {
+          create: (ingredients || []).map((ing: any) => ({
+            name: ing.name,
+            qty: Number(ing.qty) || 0,
+            unit: ing.unit || '',
+            cat: ing.cat || 'pantry',
+            store: ing.store || 'sprouts',
+            noScale: !!ing.noScale,
+          })),
+        },
       },
-    },
-    include: { ingredients: true },
-  });
+      include: { ingredients: true },
+    });
 
-  return NextResponse.json(recipe, { status: 201 });
+    return NextResponse.json(recipe, { status: 201 });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error('[POST /api/recipes]', message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

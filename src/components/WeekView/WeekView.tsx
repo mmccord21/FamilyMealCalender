@@ -84,7 +84,7 @@ export default function WeekView({
                 ) : (
                   <div className={styles.emptyRow}>
                     <div className={styles.plusCircle}>+</div>
-                    <span className={styles.emptyLbl}>Plan this evening</span>
+                    <span className={styles.emptyLbl}>Plan meal</span>
                   </div>
                 )}
               </div>

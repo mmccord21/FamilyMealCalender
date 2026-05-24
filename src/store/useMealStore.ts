@@ -41,21 +41,28 @@ export const useMealStore = create<MealState>((set, get) => ({
   setInitialData: (data) => set((state) => ({ ...state, ...data })),
   setActiveTab: (tab) => set({ activeTab: tab }),
   
-  setWeekOffset: (offset) => {
-    set({ weekOffset: offset });
+  setWeekOffset: (delta) => {
+    set((state) => ({ weekOffset: state.weekOffset + delta }));
     get().fetchWeek();
   },
 
   fetchWeek: async () => {
     const { weekOffset } = get();
-    const res = await fetch(`/api/week?offset=${weekOffset}`);
-    const data = await res.json();
-    
-    // Also fetch checked items for this week
-    const checkRes = await fetch(`/api/checked?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
-    const checked = await checkRes.json();
-    
-    set({ weekEntries: data.entries, checkedItems: checked });
+    try {
+      const res = await fetch(`/api/week?offset=${weekOffset}`);
+      if (!res.ok) {
+        set({ weekEntries: [], checkedItems: {} });
+        return;
+      }
+      const data = await res.json();
+
+      const checkRes = await fetch(`/api/checked?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
+      const checked = await checkRes.json();
+
+      set({ weekEntries: data.entries, checkedItems: checked });
+    } catch {
+      set({ weekEntries: [], checkedItems: {} });
+    }
   },
 
   saveDay: async (key, entry) => {

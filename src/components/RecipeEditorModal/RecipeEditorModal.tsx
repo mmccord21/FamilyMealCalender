@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, Ingredient, IngredientCat, Store } from '@/types';
 import { EMOJIS, CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
@@ -26,6 +26,12 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
     name: string; qty: string; unit: string; cat: IngredientCat; store: Store; noScale: boolean;
   }>({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
 
+  const [importMode, setImportMode] = useState<'url' | null>(null);
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   // Sync state when recipe changes
   useEffect(() => {
     if (open) {
@@ -36,8 +42,69 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       setIngredients(recipe?.ingredients ?? []);
       setShowIngForm(false);
       setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
+      setImportMode(null);
+      setImportUrl('');
+      setImportError('');
     }
   }, [open, recipe]);
+
+  const applyImport = (data: { name: string; sub: string; tags: string[]; ingredients: Ingredient[] }) => {
+    setName(data.name);
+    setSub(data.sub);
+    setTags(data.tags.join(', '));
+    setIngredients(data.ingredients);
+    setImportMode(null);
+    setImportUrl('');
+    setImportError('');
+  };
+
+  const handleUrlImport = async () => {
+    if (!importUrl.trim()) return;
+    setImporting(true);
+    setImportError('');
+    try {
+      const res = await fetch('/api/import-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      applyImport(data);
+    } catch (e: unknown) {
+      setImportError(e instanceof Error ? e.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handlePhotoImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportError('');
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch('/api/import-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      applyImport(data);
+    } catch (e: unknown) {
+      setImportError(e instanceof Error ? e.message : 'Import failed');
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim()) return alert('Name required');
@@ -77,6 +144,46 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
   return (
     <Modal open={open} onBackdropClick={onClose}>
       <div className={styles.title}>{recipe ? recipe.name : 'New Recipe'}</div>
+
+      <div className={styles.importSection}>
+        <div className={styles.importBtns}>
+          <button
+            className={`${styles.importBtn} ${importMode === 'url' ? styles.importBtnOn : ''}`}
+            onClick={() => { setImportMode(importMode === 'url' ? null : 'url'); setImportError(''); }}
+            disabled={importing}
+          >
+            🔗 Import from URL
+          </button>
+          <label className={`${styles.importBtn} ${importing ? styles.importBtnDisabled : ''}`}>
+            📷 Import from Photo
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoImport}
+              disabled={importing}
+            />
+          </label>
+        </div>
+        {importMode === 'url' && (
+          <div className={styles.importUrlRow}>
+            <input
+              className={styles.importUrlInput}
+              placeholder="Paste recipe URL…"
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
+              autoFocus
+            />
+            <button className={styles.importGo} onClick={handleUrlImport} disabled={importing || !importUrl.trim()}>
+              {importing ? '…' : 'Go'}
+            </button>
+          </div>
+        )}
+        {importing && <div className={styles.importStatus}>Importing recipe…</div>}
+        {importError && <div className={styles.importError}>{importError}</div>}
+      </div>
 
       <div className={styles.lbl}>Emoji</div>
       <div className={styles.emojiGrid}>

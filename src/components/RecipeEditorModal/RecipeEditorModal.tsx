@@ -10,7 +10,7 @@ interface Props {
   open: boolean;
   recipe: Recipe | null;
   onClose: () => void;
-  onSave: (recipe: Partial<Recipe>) => void;
+  onSave: (recipe: Partial<Recipe>) => void | Promise<void>;
   onDelete: (id: string) => void;
 }
 

@@ -177,10 +177,14 @@ export default function MealPlannerApp({
         open={recipeModalOpen}
         recipe={store.recipes.find((r) => r.id === editRecipeId) || null}
         onClose={() => setRecipeModalOpen(false)}
-        onSave={(r) => {
-          store.saveRecipe(r);
-          setRecipeModalOpen(false);
-          showToast(editRecipeId ? 'Recipe updated ✓' : 'Recipe added ✓');
+        onSave={async (r) => {
+          try {
+            await store.saveRecipe(r);
+            setRecipeModalOpen(false);
+            showToast(editRecipeId ? 'Recipe updated ✓' : 'Recipe added ✓');
+          } catch {
+            showToast('Failed to save recipe');
+          }
         }}
         onDelete={(id) => {
           store.deleteRecipe(id);

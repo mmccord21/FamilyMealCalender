@@ -94,10 +94,12 @@ export const useMealStore = create<MealState>((set, get) => ({
     const isNew = !recipe.id;
     const res = await fetch(isNew ? '/api/recipes' : `/api/recipes/${recipe.id}`, {
       method: isNew ? 'POST' : 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(recipe),
     });
+    if (!res.ok) throw new Error(`Failed to save recipe: ${res.status} ${res.statusText}`);
     const saved = await res.json();
-    
+
     const { recipes } = get();
     if (isNew) set({ recipes: [...recipes, saved] });
     else set({ recipes: recipes.map((r) => r.id === saved.id ? saved : r) });

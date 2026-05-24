@@ -30,21 +30,29 @@ export async function POST(request: Request) {
         sub: sub || '',
         tags: tags || [],
         color: color || '#888888',
-        ingredients: {
-          create: (ingredients || []).map((ing: any) => ({
-            name: ing.name,
-            qty: Number(ing.qty) || 0,
-            unit: ing.unit || '',
-            cat: ing.cat || 'pantry',
-            store: ing.store || 'sprouts',
-            noScale: !!ing.noScale,
-          })),
-        },
       },
+    });
+
+    if (ingredients?.length) {
+      await prisma.ingredient.createMany({
+        data: ingredients.map((ing: any) => ({
+          recipeId: recipe.id,
+          name: ing.name,
+          qty: Number(ing.qty) || 0,
+          unit: ing.unit || '',
+          cat: ing.cat || 'pantry',
+          store: ing.store || 'sprouts',
+          noScale: !!ing.noScale,
+        })),
+      });
+    }
+
+    const saved = await prisma.recipe.findUnique({
+      where: { id: recipe.id },
       include: { ingredients: true },
     });
 
-    return NextResponse.json(recipe, { status: 201 });
+    return NextResponse.json(saved, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error('[POST /api/recipes]', message);

@@ -22,10 +22,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const existing = await prisma.recipe.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) return new NextResponse('Unauthorized', { status: 401 });
 
-  // Delete old ingredients and recreate (simplest approach)
   await prisma.ingredient.deleteMany({ where: { recipeId: id } });
 
-  const recipe = await prisma.recipe.update({
+  await prisma.recipe.update({
     where: { id },
     data: {
       emoji,
@@ -33,17 +32,25 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       sub: sub || '',
       tags: tags || [],
       color: color || '#888888',
-      ingredients: {
-        create: (ingredients || []).map((ing: any) => ({
-          name: ing.name,
-          qty: Number(ing.qty) || 0,
-          unit: ing.unit || '',
-          cat: ing.cat || 'pantry',
-          store: ing.store || 'sprouts',
-          noScale: !!ing.noScale,
-        })),
-      },
     },
+  });
+
+  if (ingredients?.length) {
+    await prisma.ingredient.createMany({
+      data: ingredients.map((ing: any) => ({
+        recipeId: id,
+        name: ing.name,
+        qty: Number(ing.qty) || 0,
+        unit: ing.unit || '',
+        cat: ing.cat || 'pantry',
+        store: ing.store || 'sprouts',
+        noScale: !!ing.noScale,
+      })),
+    });
+  }
+
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
     include: { ingredients: true },
   });
 

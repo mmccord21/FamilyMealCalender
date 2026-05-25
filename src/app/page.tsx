@@ -1,18 +1,33 @@
 import MealPlannerApp from '@/components/MealPlannerApp';
 import { prisma } from '@/lib/prisma';
 import { getISOWeek } from '@/lib/helpers';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
+  const { userId } = await auth();
   const { weekYear, weekNum } = getISOWeek(new Date());
 
+  if (!userId) {
+    const [recipes, weekEntries, recurring] = [[], [], []];
+    return (
+      <MealPlannerApp
+        initialRecipes={recipes}
+        initialWeek={weekEntries}
+        initialRecurring={recurring}
+        initialPrices={{}}
+        initialChecked={{}}
+      />
+    );
+  }
+
   const [recipes, weekEntries, recurring, prices, checks] = await Promise.all([
-    prisma.recipe.findMany({ include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
-    prisma.weekEntry.findMany({ where: { weekYear, weekNum } }),
-    prisma.recurringMeal.findMany(),
-    prisma.ingredientPrice.findMany(),
-    prisma.shoppingCheck.findMany({ where: { weekYear, weekNum } }),
+    prisma.recipe.findMany({ where: { userId }, include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.weekEntry.findMany({ where: { userId, weekYear, weekNum } }),
+    prisma.recurringMeal.findMany({ where: { userId } }),
+    prisma.ingredientPrice.findMany({ where: { userId } }),
+    prisma.shoppingCheck.findMany({ where: { userId, weekYear, weekNum } }),
   ]);
 
   const pricesObj: Record<string, number> = {};

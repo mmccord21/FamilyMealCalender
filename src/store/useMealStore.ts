@@ -56,8 +56,11 @@ export const useMealStore = create<MealState>((set, get) => ({
       }
       const data = await res.json();
 
-      const checkRes = await fetch(`/api/checked?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
-      const checked = await checkRes.json();
+      let checked: Record<string, boolean> = {};
+      try {
+        const checkRes = await fetch(`/api/checked?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
+        if (checkRes.ok) checked = await checkRes.json();
+      } catch { /* non-critical */ }
 
       set({ weekEntries: data.entries, checkedItems: checked });
     } catch {

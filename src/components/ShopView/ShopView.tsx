@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ShoppingCart, Leaf, Package, Copy, Check, CalendarDays } from 'lucide-react';
 import type { Store, ShoppingItem } from '@/types';
 import { CATS, fmtShopAmt } from '@/lib/helpers';
 import styles from './ShopView.module.css';
@@ -42,23 +43,24 @@ export default function ShopView({
   return (
     <div className={styles.view}>
       <div className={styles.filterRow}>
-        <button className={`${styles.sfBtn} ${storeF === 'all' ? styles.on : ''}`} onClick={() => setStoreF('all')}>🛒 All</button>
-        <button className={`${styles.sfBtn} ${storeF === 'sprouts' ? styles.on : ''}`} onClick={() => setStoreF('sprouts')}>🌿 Sprouts</button>
-        <button className={`${styles.sfBtn} ${storeF === 'costco' ? styles.on : ''}`} onClick={() => setStoreF('costco')}>📦 Costco</button>
+        <button className={`${styles.sfBtn} ${storeF === 'all' ? styles.on : ''}`} onClick={() => setStoreF('all')}><ShoppingCart size={14} strokeWidth={2} /> All</button>
+        <button className={`${styles.sfBtn} ${storeF === 'sprouts' ? styles.on : ''}`} onClick={() => setStoreF('sprouts')}><Leaf size={14} strokeWidth={2} /> Sprouts</button>
+        <button className={`${styles.sfBtn} ${storeF === 'costco' ? styles.on : ''}`} onClick={() => setStoreF('costco')}><Package size={14} strokeWidth={2} /> Costco</button>
       </div>
 
       <div className={styles.shopHdr}>
         <span className={styles.prog}><strong>{checkedCount}</strong> of <strong>{totalCount}</strong> checked</span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className={`${styles.btnSm} ${styles.btnC}`} onClick={handleCopy}>📋 Copy</button>
+          <button className={`${styles.btnSm} ${styles.btnC}`} onClick={handleCopy}><Copy size={13} strokeWidth={2} /> Copy</button>
           <button className={`${styles.btnSm} ${styles.btnR}`} onClick={onResetChecked}>Reset</button>
         </div>
       </div>
 
       {shoppingList.length === 0 ? (
         <div className={styles.shopEmpty}>
-          <div className={styles.shopEmptyIcon}>🗓</div>
-          <div>Assign meals to your week<br />and your shopping list will<br />build itself automatically.</div>
+          <div className={styles.shopEmptyIcon}><CalendarDays size={28} strokeWidth={1.75} /></div>
+          <div className={styles.shopEmptyTitle}>Nothing to shop for yet</div>
+          <div className={styles.shopEmptyTxt}>Assign meals to your week and your shopping list builds itself automatically.</div>
         </div>
       ) : (
         Object.entries(CATS).map(([key, cat]) => {
@@ -79,18 +81,19 @@ export default function ShopView({
                 return (
                   <div key={item.mid} className={`${styles.sItem} ${done ? styles.done : ''}`} onClick={() => onToggleCheck(mk, !done)}>
                     <div className={`${styles.chk} ${done ? styles.chkOn : ''}`}>
-                      {done && <span className={styles.chkMark}>✓</span>}
+                      {done && <Check size={14} strokeWidth={3} className={styles.chkMark} />}
                     </div>
                     <div className={styles.iInfo}>
                       <div className={styles.iName}>{item.name}</div>
                       <div className={styles.iAmt}>{fmtShopAmt(item)}</div>
                       <div className={styles.iChips}>
                         {item.days.map((d, idx) => (
-                          <span key={idx} className={styles.mChip} style={{ background: d.color }}>{d.key}</span>
+                          <span key={idx} className={styles.mChip}>{d.key}</span>
                         ))}
                         {item.days.length > 1 && <span className={styles.sharedChip}>SHARED</span>}
                         <span className={item.store === 'sprouts' ? styles.storeS : styles.storeC}>
-                          {item.store === 'sprouts' ? '🌿' : '📦'}
+                          {item.store === 'sprouts' ? <Leaf size={11} strokeWidth={2.25} /> : <Package size={11} strokeWidth={2.25} />}
+                          {item.store === 'sprouts' ? 'Sprouts' : 'Costco'}
                         </span>
                       </div>
                     </div>

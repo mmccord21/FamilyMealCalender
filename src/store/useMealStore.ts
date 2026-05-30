@@ -10,8 +10,9 @@ interface MealState {
   checkedItems: Record<string, boolean>;
   
   weekOffset: number;
+  weekLoading: boolean;
   activeTab: 'plan' | 'recipes' | 'shop';
-  
+
   // Actions
   setInitialData: (data: Partial<MealState>) => void;
   setActiveTab: (tab: 'plan' | 'recipes' | 'shop') => void;
@@ -36,6 +37,7 @@ export const useMealStore = create<MealState>((set, get) => ({
   checkedItems: {},
   
   weekOffset: 0,
+  weekLoading: false,
   activeTab: 'plan',
 
   setInitialData: (data) => set((state) => ({ ...state, ...data })),
@@ -48,10 +50,11 @@ export const useMealStore = create<MealState>((set, get) => ({
 
   fetchWeek: async () => {
     const { weekOffset } = get();
+    set({ weekLoading: true });
     try {
       const res = await fetch(`/api/week?offset=${weekOffset}`);
       if (!res.ok) {
-        set({ weekEntries: [], checkedItems: {} });
+        set({ weekEntries: [], checkedItems: {}, weekLoading: false });
         return;
       }
       const data = await res.json();
@@ -62,9 +65,9 @@ export const useMealStore = create<MealState>((set, get) => ({
         if (checkRes.ok) checked = await checkRes.json();
       } catch { /* non-critical */ }
 
-      set({ weekEntries: data.entries, checkedItems: checked });
+      set({ weekEntries: data.entries, checkedItems: checked, weekLoading: false });
     } catch {
-      set({ weekEntries: [], checkedItems: {} });
+      set({ weekEntries: [], checkedItems: {}, weekLoading: false });
     }
   },
 

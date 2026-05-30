@@ -1,5 +1,6 @@
 'use client';
 
+import { Search, BookOpen, Plus, SearchX } from 'lucide-react';
 import type { Recipe } from '@/types';
 import styles from './RecipesView.module.css';
 import { useState } from 'react';
@@ -20,25 +21,28 @@ export default function RecipesView({ recipes, prices, onOpenEditor }: Props) {
 
   return (
     <div className={styles.view}>
-      <input
-        className={styles.searchBox}
-        placeholder="🔍  Search recipes…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className={styles.searchWrap}>
+        <Search size={16} strokeWidth={2} className={styles.searchIcon} />
+        <input
+          className={styles.searchBox}
+          placeholder="Search recipes…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
 
       <div className={styles.list}>
         {filtered.length === 0 && !query ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyStateIcon}>📚</div>
-            <div className={styles.emptyStateTxt}>
-              Your recipe library is empty.<br />
-              Add your first recipe below!
-            </div>
+            <div className={styles.emptyIcon}><BookOpen size={28} strokeWidth={1.75} /></div>
+            <div className={styles.emptyTitle}>No recipes yet</div>
+            <div className={styles.emptyStateTxt}>Add your first recipe to start building your library.</div>
           </div>
         ) : filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyStateTxt}>No recipes found matching "{query}"</div>
+            <div className={styles.emptyIcon}><SearchX size={28} strokeWidth={1.75} /></div>
+            <div className={styles.emptyTitle}>No matches</div>
+            <div className={styles.emptyStateTxt}>Nothing found for &ldquo;{query}&rdquo;.</div>
           </div>
         ) : (
           filtered.map((r) => {
@@ -49,7 +53,7 @@ export default function RecipesView({ recipes, prices, onOpenEditor }: Props) {
 
             return (
               <div key={r.id} className={styles.recipeCard} onClick={() => onOpenEditor(r.id)}>
-                <span className={styles.rcEmoji}>{r.emoji}</span>
+                <span className={styles.rcEmoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
                 <div className={styles.rcInfo}>
                   <div className={styles.rcName}>{r.name}</div>
                   <div className={styles.rcMeta}>
@@ -64,7 +68,7 @@ export default function RecipesView({ recipes, prices, onOpenEditor }: Props) {
       </div>
 
       <button className={styles.addRecipeCard} onClick={() => onOpenEditor(null)}>
-        <span className={styles.arcIcon}>＋</span>
+        <Plus size={18} strokeWidth={2.5} className={styles.arcIcon} />
         <span className={styles.arcLbl}>Add a Recipe</span>
       </button>
     </div>

@@ -7,13 +7,14 @@ export const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Sat
 export const DAY_COLORS = ['#4A6FA5','#4A7A52','#A0652A','#B54A2A','#8B3A2A','#C47A4A','#6A4A8A'];
 export const REC_COLORS: Record<string, string> = { brunch: '#C47A4A', lunch: '#4A7A52' };
 
+// Restrained 3-color semantic palette: diet (sage), time (gold), occasion (terra)
 export const TAG_COLORS: Record<string, string> = {
-  keto: '#4A7A52',
+  keto: '#3A6B42',
   'meal-prep': '#A0652A',
-  '30 min': '#4A6FA5',
-  'crowd-pleaser': '#8A4A7A',
-  'fun night': '#C47A4A',
-  'date night': '#8B3A2A',
+  '30 min': '#A0652A',
+  'crowd-pleaser': '#B5522A',
+  'fun night': '#B5522A',
+  'date night': '#B5522A',
 };
 
 export const CATS: Record<string, { l: string; i: string; c: string }> = {

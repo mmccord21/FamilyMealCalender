@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Link2, Camera, Leaf, Package, Plus, ChevronUp, X, Check } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, Ingredient, IngredientCat, Store } from '@/types';
 import { EMOJIS, CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
@@ -152,10 +153,10 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
             onClick={() => { setImportMode(importMode === 'url' ? null : 'url'); setImportError(''); }}
             disabled={importing}
           >
-            🔗 Import from URL
+            <Link2 size={14} strokeWidth={2} /> Import from URL
           </button>
           <label className={`${styles.importBtn} ${importing ? styles.importBtnDisabled : ''}`}>
-            📷 Import from Photo
+            <Camera size={14} strokeWidth={2} /> Import from Photo
             <input
               ref={photoInputRef}
               type="file"
@@ -211,17 +212,17 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
               <div className={styles.ingInfo}>
                 <div className={styles.ingName}>{ing.name}</div>
                 <div className={styles.ingQty}>
-                  {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''} · {ing.store === 'costco' ? '📦 Costco' : '🌿 Sprouts'}
+                  {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''} · {ing.store === 'costco' ? 'Costco' : 'Sprouts'}
                 </div>
               </div>
-              <button className={styles.ingDel} onClick={() => removeIngredient(ing.id)}>×</button>
+              <button className={styles.ingDel} onClick={() => removeIngredient(ing.id)} aria-label="Remove ingredient"><X size={16} strokeWidth={2.5} /></button>
             </div>
           ))
         )}
       </div>
 
       <button className={styles.addIngBtn} onClick={() => setShowIngForm(!showIngForm)}>
-        {showIngForm ? '↑ Close' : '＋ Add Ingredient'}
+        {showIngForm ? <><ChevronUp size={15} strokeWidth={2.25} /> Close</> : <><Plus size={15} strokeWidth={2.25} /> Add Ingredient</>}
       </button>
 
       {showIngForm && (
@@ -261,16 +262,16 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
             <button
               className={`${styles.storePill} ${draftIng.store === 'sprouts' ? styles.storePillOn : ''}`}
               onClick={() => setDraftIng({ ...draftIng, store: 'sprouts' })}
-            >🌿 Sprouts</button>
+            ><Leaf size={13} strokeWidth={2} /> Sprouts</button>
             <button
               className={`${styles.storePill} ${draftIng.store === 'costco' ? styles.storePillOn : ''}`}
               onClick={() => setDraftIng({ ...draftIng, store: 'costco' })}
-            >📦 Costco</button>
+            ><Package size={13} strokeWidth={2} /> Costco</button>
           </div>
 
           <div className={styles.fixedToggle} onClick={() => setDraftIng({ ...draftIng, noScale: !draftIng.noScale })}>
             <div className={`${styles.toggleBox} ${draftIng.noScale ? styles.toggleBoxOn : ''}`}>
-              {draftIng.noScale && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>✓</span>}
+              {draftIng.noScale && <Check size={13} strokeWidth={3} color="white" />}
             </div>
             Fixed qty — doesn&apos;t scale with guest count
           </div>

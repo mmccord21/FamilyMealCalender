@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header/Header';
 import TabBar from '@/components/TabBar/TabBar';
-import BottomNav from '@/components/BottomNav/BottomNav';
 import WeekView from '@/components/WeekView/WeekView';
 import RecipesView from '@/components/RecipesView/RecipesView';
 import ShopView from '@/components/ShopView/ShopView';
@@ -85,6 +84,7 @@ export default function MealPlannerApp({
             weekEntries={store.weekEntries}
             recurring={store.recurring}
             weekOffset={store.weekOffset}
+            loading={store.weekLoading}
             onShiftWeek={store.setWeekOffset}
             onOpenDay={(key, idx) => {
               setEditDayKey(key);
@@ -129,8 +129,6 @@ export default function MealPlannerApp({
           />
         </div>
       </div>
-
-      <BottomNav active={store.activeTab} onChange={store.setActiveTab} />
 
       {/* Modals */}
       <DayModal

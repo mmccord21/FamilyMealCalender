@@ -1,58 +1,83 @@
 .hdr {
   background: var(--br);
-  padding: calc(env(safe-area-inset-top, 0px) + 12px) 18px 14px;
+  padding: calc(env(safe-area-inset-top, 0px) + var(--sp-2)) var(--sp-4) var(--sp-2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* ── Brand ── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--terra);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.eyebrow {
-  font-size: 10px;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
-
-.title {
+.wordmark {
   font-family: 'Playfair Display', serif;
-  font-size: 21px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 500;
   color: #fdf8f0;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-.sub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 4px;
+/* ── Right cluster ── */
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
 .budget {
-  background: var(--sage);
-  border-radius: 13px;
-  padding: 9px 14px;
-  text-align: center;
-  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  background: rgba(74, 122, 82, 0.18);
+  border: 1px solid rgba(74, 122, 82, 0.4);
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
 }
 
 .budgetNum {
   font-family: 'Playfair Display', serif;
-  font-size: 21px;
-  color: #fff;
+  font-size: 16px;
   font-weight: 600;
+  color: #fff;
   line-height: 1;
 }
 
 .budgetLabel {
   font-size: 9px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
-  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.55);
 }
+
+.signIn {
+  background: var(--sage);
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: transform var(--dur) var(--ease), filter var(--dur) var(--ease);
+}
+.signIn:hover { filter: brightness(1.08); }
+.signIn:active { transform: scale(0.96); }

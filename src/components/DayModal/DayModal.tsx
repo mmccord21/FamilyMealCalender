@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { UtensilsCrossed, CalendarOff, Plus, Minus, ChevronRight, Trash2 } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, WeekEntry } from '@/types';
 import { DAY_FULL, QUICK_NOTES, BASE_GUESTS, getWeekDates } from '@/lib/helpers';
@@ -67,23 +68,23 @@ export default function DayModal({
         <button
           className={`${styles.modeOpt} ${mode === 'cooking' ? styles.on : ''}`}
           onClick={() => handleModeChange('cooking')}
-        >🍽️ Cooking</button>
+        ><UtensilsCrossed size={15} strokeWidth={2} /> Cooking</button>
         <button
           className={`${styles.modeOpt} ${mode === 'note' ? styles.on : ''}`}
           onClick={() => handleModeChange('note')}
-        >📝 Not cooking</button>
+        ><CalendarOff size={15} strokeWidth={2} /> Not cooking</button>
       </div>
 
       {mode === 'cooking' ? (
         <div>
           {recipe ? (
             <div className={styles.chosenRecipe} onClick={onOpenPicker}>
-              <span className={styles.crEmoji}>{recipe.emoji}</span>
+              <span className={styles.crEmoji} style={{ background: `${recipe.color}1a` }}>{recipe.emoji}</span>
               <span className={styles.crName}>{recipe.name}</span>
-              <span className={styles.crChange}>Change ›</span>
+              <span className={styles.crChange}>Change <ChevronRight size={13} strokeWidth={2.5} /></span>
             </div>
           ) : (
-            <button className={styles.noRecipeBtn} onClick={onOpenPicker}>＋ Choose a Recipe</button>
+            <button className={styles.noRecipeBtn} onClick={onOpenPicker}><Plus size={17} strokeWidth={2.25} /> Choose a Recipe</button>
           )}
 
           <div className={styles.guestRow}>
@@ -92,9 +93,9 @@ export default function DayModal({
               <div className={styles.grSub}>Scales this meal&apos;s quantities</div>
             </div>
             <div className={styles.gsCtl}>
-              <button className={styles.gsBtn} onClick={() => setGuests(Math.max(1, guests - 1))}>−</button>
+              <button className={styles.gsBtn} onClick={() => setGuests(Math.max(1, guests - 1))} aria-label="Fewer guests"><Minus size={16} strokeWidth={2.5} /></button>
               <span className={styles.gsNum}>{guests}</span>
-              <button className={styles.gsBtn} onClick={() => setGuests(Math.min(20, guests + 1))}>+</button>
+              <button className={styles.gsBtn} onClick={() => setGuests(Math.min(20, guests + 1))} aria-label="More guests"><Plus size={16} strokeWidth={2.5} /></button>
             </div>
           </div>
         </div>
@@ -124,7 +125,7 @@ export default function DayModal({
         <button className={styles.btnPri} onClick={handleSave}>Save</button>
       </div>
       {entry && entry.type !== 'empty' && (
-        <button className={styles.btnDanger} onClick={onClear}>Clear this evening</button>
+        <button className={styles.btnDanger} onClick={onClear}><Trash2 size={14} strokeWidth={2} /> Clear this evening</button>
       )}
     </Modal>
   );

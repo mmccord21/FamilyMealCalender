@@ -14,15 +14,19 @@
 .modeToggle {
   display: flex;
   background: #f5efe8;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   padding: 3px;
   margin-bottom: 14px;
 }
 
 .modeOpt {
   flex: 1;
-  padding: 9px;
-  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
   border: none;
   background: none;
   font-size: 13px;
@@ -30,52 +34,72 @@
   color: var(--mu);
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   text-align: center;
 }
 
 .on {
   background: var(--sur);
   color: var(--br);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .chosenRecipe {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #f5efe8;
-  border-radius: 14px;
-  padding: 12px 14px;
+  gap: 12px;
+  background: #f9f5f0;
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
   margin-top: 12px;
   cursor: pointer;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
+.chosenRecipe:active { transform: scale(0.99); }
+.chosenRecipe:hover { border-color: var(--gold); }
 
-.crEmoji { font-size: 24px; }
+.crEmoji {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
 .crName  { font-family: 'Playfair Display', serif; font-size: 15px; flex: 1; }
-.crChange{ font-size: 12px; color: var(--gold); font-weight: 600; }
+.crChange{ display: inline-flex; align-items: center; gap: 1px; font-size: 12px; color: var(--gold); font-weight: 600; }
 
 .noRecipeBtn {
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin-top: 12px;
-  padding: 14px;
-  background: #f5efe8;
+  padding: 16px;
+  background: none;
   border: 2px dashed var(--bdr);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--mu);
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   text-align: center;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
+.noRecipeBtn:hover { border-color: var(--terra); color: var(--terra); }
+.noRecipeBtn:active { background: #fbf5ee; }
 
 .guestRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #f9f5f0;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 12px 16px;
   margin-top: 14px;
 }
@@ -95,15 +119,14 @@
 .gsBtn {
   background: none;
   border: none;
-  width: 36px;
-  height: 32px;
-  font-size: 20px;
+  width: 40px;
+  height: 36px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--br);
-  font-family: 'DM Sans', sans-serif;
+  transition: background var(--dur) var(--ease);
 }
 .gsBtn:active { background: var(--bdr); }
 
@@ -172,32 +195,40 @@
   background: var(--br);
   color: #fff;
   border: none;
-  border-radius: 13px;
+  border-radius: var(--r-sm);
   padding: 14px;
   font-size: 15px;
   font-weight: 600;
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
+.btnPri:active { transform: scale(0.97); opacity: 0.92; }
 
 .btnSec {
   flex: 1;
   background: var(--bdr);
   color: var(--br);
   border: none;
-  border-radius: 13px;
+  border-radius: var(--r-sm);
   padding: 14px;
   font-size: 15px;
   font-weight: 600;
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
+  transition: transform var(--dur) var(--ease);
 }
+.btnSec:active { transform: scale(0.97); }
 
 .btnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: #fff0ee;
   color: var(--terra);
   border: none;
-  border-radius: 13px;
+  border-radius: var(--r-sm);
   padding: 14px;
   font-size: 14px;
   font-weight: 600;
@@ -205,4 +236,6 @@
   cursor: pointer;
   margin-top: 10px;
   width: 100%;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
 }
+.btnDanger:active { transform: scale(0.98); background: #ffe6e2; }

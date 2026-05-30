@@ -8,5 +8,7 @@
 .helpTxt { font-size: 12px; color: var(--mu); margin-top: 8px; line-height: 1.4; }
 
 .actions { display: flex; gap: 9px; margin-top: 20px; }
-.btnPri { flex: 1; background: var(--br); color: #fff; border: none; border-radius: 13px; padding: 14px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; }
-.btnSec { flex: 1; background: var(--bdr); color: var(--br); border: none; border-radius: 13px; padding: 14px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+.btnPri { flex: 1; background: var(--br); color: #fff; border: none; border-radius: var(--r-sm); padding: 14px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+.btnPri:active { transform: scale(0.97); opacity: 0.92; }
+.btnSec { flex: 1; background: var(--bdr); color: var(--br); border: none; border-radius: var(--r-sm); padding: 14px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: transform var(--dur) var(--ease); }
+.btnSec:active { transform: scale(0.97); }

@@ -1,20 +1,34 @@
 .view {
-  padding: 16px 15px calc(env(safe-area-inset-bottom, 0px) + 84px);
+  padding: 16px 15px calc(env(safe-area-inset-bottom, 0px) + 24px);
 }
 
+.searchWrap {
+  position: relative;
+  margin-bottom: var(--sp-4);
+}
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mu);
+  pointer-events: none;
+}
 .searchBox {
   width: 100%;
-  padding: 11px 14px;
-  border-radius: 12px;
+  padding: 11px 14px 11px 40px;
+  border-radius: var(--r-sm);
   border: 1.5px solid var(--bdr);
   background: var(--sur);
   font-size: 14px;
   font-family: 'DM Sans', sans-serif;
   color: var(--br);
   outline: none;
-  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur) var(--ease);
 }
 .searchBox:focus { border-color: var(--gold); }
+.searchBox::placeholder { color: var(--mu); }
 
 .list {
   margin-bottom: 10px;
@@ -22,18 +36,30 @@
 
 .recipeCard {
   background: var(--sur);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   border: 1px solid var(--bdr);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  margin-bottom: 10px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-2);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.recipeCard:active { background: #fbf5ee; }
+.recipeCard:hover { box-shadow: var(--shadow-md); }
+.recipeCard:active { transform: scale(0.99); background: #fbf5ee; }
 
-.rcEmoji { font-size: 26px; flex-shrink: 0; }
+.rcEmoji {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
 .rcInfo  { flex: 1; min-width: 0; }
 .rcName  { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 2px; }
 .rcMeta  { font-size: 12px; color: var(--mu); }
@@ -42,22 +68,47 @@
 .addRecipeCard {
   background: none;
   border: 2px dashed var(--bdr);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--sp-2);
   padding: 20px;
   cursor: pointer;
   width: 100%;
   font-family: 'DM Sans', sans-serif;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-2);
+  color: var(--mu);
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
+.addRecipeCard:hover { border-color: var(--terra); color: var(--terra); }
 .addRecipeCard:active { background: #fbf5ee; }
 
-.arcIcon { font-size: 22px; color: var(--gold); }
-.arcLbl  { font-size: 14px; font-weight: 500; color: var(--mu); }
+.arcIcon { color: currentColor; }
+.arcLbl  { font-size: 14px; font-weight: 600; color: currentColor; }
 
-.emptyState { text-align: center; padding: 40px 20px; color: var(--mu); }
-.emptyStateIcon { font-size: 48px; margin-bottom: 12px; }
-.emptyStateTxt  { font-size: 14px; line-height: 1.5; }
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f5efe8;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-4);
+}
+.emptyTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--br);
+  margin-bottom: 4px;
+}
+.emptyStateTxt  { font-size: 13.5px; line-height: 1.5; color: var(--mu); max-width: 240px; }

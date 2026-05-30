@@ -1,5 +1,6 @@
 'use client';
 
+import { CalendarDays, BookOpen, ShoppingCart } from 'lucide-react';
 import styles from './TabBar.module.css';
 
 type Tab = 'plan' | 'recipes' | 'shop';
@@ -9,23 +10,24 @@ interface Props {
   onChange: (tab: Tab) => void;
 }
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'plan',    label: '🗓 Week' },
-  { id: 'recipes', label: '📚 Recipes' },
-  { id: 'shop',    label: '🛒 Shopping' },
+const TABS: { id: Tab; label: string; Icon: typeof CalendarDays }[] = [
+  { id: 'plan',    label: 'Week',     Icon: CalendarDays },
+  { id: 'recipes', label: 'Recipes',  Icon: BookOpen },
+  { id: 'shop',    label: 'Shopping', Icon: ShoppingCart },
 ];
 
 export default function TabBar({ active, onChange }: Props) {
   return (
     <div className={styles.tabBar}>
-      {TABS.map((t) => (
+      {TABS.map(({ id, label, Icon }) => (
         <button
-          key={t.id}
-          id={`tb-${t.id}`}
-          className={`${styles.tab} ${active === t.id ? styles.on : ''}`}
-          onClick={() => onChange(t.id)}
+          key={id}
+          id={`tb-${id}`}
+          className={`${styles.tab} ${active === id ? styles.on : ''}`}
+          onClick={() => onChange(id)}
         >
-          {t.label}
+          <Icon size={16} strokeWidth={2} />
+          <span>{label}</span>
         </button>
       ))}
     </div>

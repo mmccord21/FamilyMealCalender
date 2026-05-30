@@ -26,6 +26,7 @@ A **family meal planning PWA** that feels like a premium, $1M product. The goal 
 | Auth | **Clerk** (`@clerk/nextjs` v7) |
 | AI | Anthropic SDK (`@anthropic-ai/sdk`) — used for URL & photo recipe import |
 | Styling | **CSS Modules** + global design tokens in `globals.css` |
+| Icons | **lucide-react** — all UI chrome. Food/recipe emoji kept as user content (in tinted containers) |
 | Fonts | Playfair Display (headings/serif accent) · DM Sans (body) — loaded via Google Fonts |
 | PWA | Inline manifest in `layout.tsx`, apple-web-app-capable, standalone display |
 
@@ -104,6 +105,7 @@ Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 
 ### Design Tokens (`globals.css :root`)
 ```css
+/* Color */
 --bg:   #FDF8F0   /* warm off-white page background */
 --sur:  #fff      /* card/surface white */
 --br:   #2C1810   /* rich dark brown — primary text */
@@ -112,7 +114,13 @@ Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 --gold: #C4956A   /* warm gold — accent */
 --mu:   #9B8B7B   /* muted warm grey — secondary text */
 --bdr:  #EFE6DC   /* warm beige border */
+
+/* Spacing  */ --sp-1..8     /* 4 / 8 / 12 / 16 / 24 / 32 */
+/* Radius   */ --r-sm/md/lg  /* 10 / 14 / 18 */ · --r-pill /* 100 */
+/* Elevation*/ --shadow-sm/md/lg  /* soft, layered, low-opacity */
+/* Motion   */ --ease (cubic-bezier) · --dur (180ms)
 ```
+Use these tokens — don't freehand spacing/radius/shadow values.
 
 ### Typography
 - **Headings / accents**: `Playfair Display` (serif, italic for elegance)
@@ -124,10 +132,13 @@ Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 Mon #4A6FA5  Tue #4A7A52  Wed #A0652A  Thu #B54A2A  Fri #8B3A2A  Sat #C47A4A  Sun #6A4A8A
 ```
 
-### Tag Colors
+### Tag Colors — restrained 3-color semantic palette
 ```
-keto #4A7A52 · meal-prep #A0652A · 30 min #4A6FA5 · crowd-pleaser #8A4A7A · fun night #C47A4A · date night #8B3A2A
+diet (keto)                         → sage  #3A6B42
+time (meal-prep · 30 min)           → gold  #A0652A
+occasion (crowd-pleaser · fun night · date night) → terra #B5522A
 ```
+Tags render as **soft tinted pills** (colored text on a 10%-alpha tint of the same hue), not solid-fill white-text pills.
 
 ### Design Goals (the "million dollar" standard)
 - **Mobile-first, desktop-great.** Every component must look perfect at 375px AND 1440px.
@@ -166,7 +177,8 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 ## Key Constraints & Gotchas
 
 - **Next.js 16 breaking changes** — this is NOT the Next.js you know from training. Read `node_modules/next/dist/docs/` before any Next.js-specific code. (See `AGENTS.md`.)
-- The week grid is a **7-column CSS grid** — very tight on mobile (each column ~48px). Text must be tiny and truncated.
+- The week view is a **vertical list of full-width day cards** (each row sizes independently, so adding meals never breaks the layout). Above it sits a compact 7-dot overview strip. NOTE: an earlier 7-column horizontal grid was removed — it caused cells to grow and overflow the screen.
+- `WeekView` shows shimmer **skeleton rows** while `store.weekLoading` is true (set during `fetchWeek`).
 - `buildShoppingList` in `helpers.ts` is pure — it derives the shopping list from `weekEntries + recurring` every render. Do not add side effects there.
 - Prices are stored by **lowercase ingredient name** as the key.
 - `weekOffset` 0 = this week, -1 = last week, +1 = next week. Week navigation re-fetches from API.
@@ -180,3 +192,5 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 | Date | Change |
 |---|---|
 | 2026-05-24 | Initial CLAUDE.md created — baseline audit of existing codebase |
+| 2026-05-30 | Design refresh Ph1+2: WeekView → vertical day cards + overview dots; lucide-react icons replace emoji chrome; compact header; spacing/radius/elevation/motion tokens; 3-color semantic tags (soft tints); week skeleton loaders; polished empty states |
+| 2026-05-30 | Design refresh Ph3 (modals): base Modal uses tokens + desktop centered/pop-in (mobile sheet); DayModal cooking/not-cooking toggle + guest stepper + choose-recipe now Lucide icons, chosen-recipe emoji tinted, press states; RecipePicker has Search-icon input + SearchX empty state + tinted recipe avatars; PriceModal token buttons; Toast → floating pill w/ shadow-lg + scale-in |

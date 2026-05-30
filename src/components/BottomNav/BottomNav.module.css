@@ -25,16 +25,20 @@
 }
 
 .icon {
-  font-size: 22px;
-  transition: transform 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mu);
+  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .label {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   color: var(--mu);
+  transition: color var(--dur) var(--ease);
 }
 
 .on .label { color: var(--terra); }
-.on .icon  { transform: scale(1.12); }
+.on .icon  { color: var(--terra); transform: scale(1.08); }

@@ -4,6 +4,13 @@
 .sfBtn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1.5px solid var(--bdr); background: var(--sur); border-radius: var(--r-sm); padding: 9px 4px; font-size: 12px; font-weight: 600; color: var(--mu); cursor: pointer; font-family: 'DM Sans', sans-serif; box-shadow: var(--shadow-sm); transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease); }
 .sfBtn.on { border-color: var(--sage); color: var(--sage); background: #eef5ef; }
 
+.addRow { display: flex; gap: 8px; margin-bottom: 13px; }
+.addInput { flex: 1; border: 1.5px solid var(--bdr); border-radius: var(--r-sm); padding: 10px 13px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--br); background: var(--sur); outline: none; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.addInput::placeholder { color: #c4b5a8; }
+.addInput:focus { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(181,82,42,0.08); }
+.addBtn { width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-sm); background: var(--terra); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform var(--dur) var(--ease), background var(--dur) var(--ease); }
+.addBtn:active { transform: scale(0.94); background: #9e3d1a; }
+
 .shopHdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 13px; flex-wrap: wrap; gap: 6px; }
 .prog { font-size: 13px; color: var(--mu); }
 .prog strong { color: var(--sage); }
@@ -35,6 +42,12 @@
 .sharedChip { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--sage); background: #eef5ef; padding: 2px 7px; border-radius: 100px; }
 .storeS { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #3a6b42; background: #eef5ef; }
 .storeC { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #1a4fa0; background: #eef3ff; }
+
+.catHdrCustom { border-color: var(--mu) !important; }
+.catLblCustom { color: var(--mu) !important; }
+
+.delBtn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: none; background: none; color: #c4b5a8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.delBtn:active { color: var(--terra); background: #fdf0eb; }
 
 .iRight { flex-shrink: 0; margin-top: 1px; }
 .priceBadge { font-size: 13px; color: var(--mu); background: #f5efe8; border-radius: 6px; padding: 3px 8px; cursor: pointer; border: 1px solid transparent; display: block; }

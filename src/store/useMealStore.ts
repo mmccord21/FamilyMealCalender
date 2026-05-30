@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Recipe, WeekEntry, RecurringMeal } from '@/types';
+import type { Recipe, WeekEntry, RecurringMeal, ManualShoppingItem } from '@/types';
 import { getISOWeek } from '@/lib/helpers';
 
 interface MealState {
@@ -8,7 +8,8 @@ interface MealState {
   recurring: RecurringMeal[];
   prices: Record<string, number>;
   checkedItems: Record<string, boolean>;
-  
+  manualItems: ManualShoppingItem[];
+
   weekOffset: number;
   weekLoading: boolean;
   activeTab: 'plan' | 'recipes' | 'shop';
@@ -17,7 +18,7 @@ interface MealState {
   setInitialData: (data: Partial<MealState>) => void;
   setActiveTab: (tab: 'plan' | 'recipes' | 'shop') => void;
   setWeekOffset: (offset: number) => void;
-  
+
   // API Actions
   fetchWeek: () => Promise<void>;
   saveDay: (key: string, entry: Partial<WeekEntry>) => Promise<void>;
@@ -27,6 +28,8 @@ interface MealState {
   savePrice: (itemKey: string, price: number) => Promise<void>;
   toggleCheck: (itemKey: string, checked: boolean) => Promise<void>;
   resetChecked: () => Promise<void>;
+  addManualItem: (name: string) => Promise<void>;
+  deleteManualItem: (id: string) => Promise<void>;
 }
 
 export const useMealStore = create<MealState>((set, get) => ({
@@ -35,12 +38,17 @@ export const useMealStore = create<MealState>((set, get) => ({
   recurring: [],
   prices: {},
   checkedItems: {},
-  
+  manualItems: [],
+
   weekOffset: 0,
   weekLoading: false,
   activeTab: 'plan',
 
-  setInitialData: (data) => set((state) => ({ ...state, ...data })),
+  setInitialData: (data) => set((state) => ({
+    ...state,
+    ...data,
+    manualItems: data.manualItems ?? state.manualItems,
+  })),
   setActiveTab: (tab) => set({ activeTab: tab }),
   
   setWeekOffset: (delta) => {
@@ -65,7 +73,13 @@ export const useMealStore = create<MealState>((set, get) => ({
         if (checkRes.ok) checked = await checkRes.json();
       } catch { /* non-critical */ }
 
-      set({ weekEntries: data.entries, checkedItems: checked, weekLoading: false });
+      let manualItems: ManualShoppingItem[] = [];
+      try {
+        const manualRes = await fetch(`/api/manual-items?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
+        if (manualRes.ok) manualItems = await manualRes.json();
+      } catch { /* non-critical */ }
+
+      set({ weekEntries: data.entries, checkedItems: checked, manualItems, weekLoading: false });
     } catch {
       set({ weekEntries: [], checkedItems: {}, weekLoading: false });
     }
@@ -151,5 +165,28 @@ export const useMealStore = create<MealState>((set, get) => ({
 
     set({ checkedItems: {} });
     await fetch(`/api/checked?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' });
+  },
+
+  addManualItem: async (name) => {
+    const { weekOffset } = get();
+    const today = new Date();
+    today.setDate(today.getDate() + weekOffset * 7);
+    const { weekYear, weekNum } = getISOWeek(today);
+
+    const tempId = `temp-${Date.now()}`;
+    set((state) => ({ manualItems: [...state.manualItems, { id: tempId, name, weekYear, weekNum }] }));
+
+    const res = await fetch('/api/manual-items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, weekYear, weekNum }),
+    });
+    const saved = await res.json();
+    set((state) => ({ manualItems: state.manualItems.map((i) => i.id === tempId ? saved : i) }));
+  },
+
+  deleteManualItem: async (id) => {
+    set((state) => ({ manualItems: state.manualItems.filter((i) => i.id !== id) }));
+    await fetch(`/api/manual-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 }));

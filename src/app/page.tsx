@@ -10,24 +10,25 @@ export default async function Home() {
   const { weekYear, weekNum } = getISOWeek(new Date());
 
   if (!userId) {
-    const [recipes, weekEntries, recurring] = [[], [], []];
     return (
       <MealPlannerApp
-        initialRecipes={recipes}
-        initialWeek={weekEntries}
-        initialRecurring={recurring}
+        initialRecipes={[]}
+        initialWeek={[]}
+        initialRecurring={[]}
         initialPrices={{}}
         initialChecked={{}}
+        initialManualItems={[]}
       />
     );
   }
 
-  const [recipes, weekEntries, recurring, prices, checks] = await Promise.all([
+  const [recipes, weekEntries, recurring, prices, checks, manualItems] = await Promise.all([
     prisma.recipe.findMany({ where: { userId }, include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
     prisma.weekEntry.findMany({ where: { userId, weekYear, weekNum } }),
     prisma.recurringMeal.findMany({ where: { userId } }),
     prisma.ingredientPrice.findMany({ where: { userId } }),
     prisma.shoppingCheck.findMany({ where: { userId, weekYear, weekNum } }),
+    prisma.manualShoppingItem.findMany({ where: { userId, weekYear, weekNum } }),
   ]);
 
   const pricesObj: Record<string, number> = {};
@@ -43,6 +44,7 @@ export default async function Home() {
       initialRecurring={recurring}
       initialPrices={pricesObj}
       initialChecked={checksObj}
+      initialManualItems={manualItems}
     />
   );
 }

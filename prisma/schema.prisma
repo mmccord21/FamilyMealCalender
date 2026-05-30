@@ -77,3 +77,11 @@ model ShoppingCheck {
 
   @@unique([userId, itemKey, weekYear, weekNum])
 }
+
+model ManualShoppingItem {
+  id       String @id @default(cuid())
+  userId   String
+  name     String
+  weekYear Int
+  weekNum  Int
+}

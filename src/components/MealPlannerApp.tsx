@@ -14,7 +14,7 @@ import Toast from '@/components/Toast/Toast';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal } from '@/lib/helpers';
-import type { Recipe, WeekEntry, RecurringMeal } from '@/types';
+import type { Recipe, WeekEntry, RecurringMeal, ManualShoppingItem } from '@/types';
 
 interface Props {
   initialRecipes: Recipe[];
@@ -22,10 +22,11 @@ interface Props {
   initialRecurring: RecurringMeal[];
   initialPrices: Record<string, number>;
   initialChecked: Record<string, boolean>;
+  initialManualItems: ManualShoppingItem[];
 }
 
 export default function MealPlannerApp({
-  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked
+  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialManualItems
 }: Props) {
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
@@ -57,6 +58,7 @@ export default function MealPlannerApp({
       recurring: initialRecurring,
       prices: initialPrices,
       checkedItems: initialChecked,
+      manualItems: initialManualItems,
     });
   }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked]);
 
@@ -117,6 +119,7 @@ export default function MealPlannerApp({
             shoppingList={shoppingList}
             checkedItems={store.checkedItems}
             prices={store.prices}
+            manualItems={store.manualItems}
             onToggleCheck={store.toggleCheck}
             onResetChecked={store.resetChecked}
             onCopy={handleCopyList}
@@ -126,6 +129,8 @@ export default function MealPlannerApp({
               setPriceItemAmt(amt);
               setPriceModalOpen(true);
             }}
+            onAddManualItem={store.addManualItem}
+            onDeleteManualItem={store.deleteManualItem}
           />
         </div>
       </div>

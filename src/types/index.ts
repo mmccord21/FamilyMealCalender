@@ -57,6 +57,13 @@ export interface ShoppingCheck {
   weekNum: number;
 }
 
+export interface ManualShoppingItem {
+  id: string;
+  name: string;
+  weekYear: number;
+  weekNum: number;
+}
+
 // Derived shopping list item (not stored directly)
 export interface ShoppingItem {
   mid: string;

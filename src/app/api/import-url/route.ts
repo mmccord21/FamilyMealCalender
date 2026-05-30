@@ -4,6 +4,33 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const APP_TAGS = ['keto', 'meal-prep', '30 min', 'crowd-pleaser', 'fun night', 'date night'];
+
+// JSON-LD recipeInstructions can be a string, an array of strings, an array of
+// HowToStep objects, or HowToSection objects nesting HowToSteps. Flatten any
+// of these into a clean newline-separated list of steps.
+function flattenInstructions(raw: unknown): string {
+  const steps: string[] = [];
+  const visit = (node: unknown) => {
+    if (!node) return;
+    if (typeof node === 'string') {
+      const t = node.replace(/<[^>]+>/g, '').trim();
+      if (t) steps.push(t);
+      return;
+    }
+    if (Array.isArray(node)) { node.forEach(visit); return; }
+    if (typeof node === 'object') {
+      const o = node as Record<string, unknown>;
+      if (Array.isArray(o.itemListElement)) { visit(o.itemListElement); return; }
+      const t = typeof o.text === 'string' ? o.text : typeof o.name === 'string' ? o.name : '';
+      const clean = t.replace(/<[^>]+>/g, '').trim();
+      if (clean) steps.push(clean);
+    }
+  };
+  visit(raw);
+  return steps.join('\n');
+}
+
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
@@ -48,40 +75,73 @@ export async function POST(request: Request) {
   const rawDescription = typeof schema.description === 'string' ? schema.description : '';
   const rawKeywords = typeof schema.keywords === 'string' ? schema.keywords : '';
   const rawName = typeof schema.name === 'string' ? schema.name : '';
+  const instructions = flattenInstructions(schema.recipeInstructions);
 
-  // Use Claude Haiku to parse ingredient strings into structured objects
-  let ingredients: unknown[] = [];
+  // Instructions come straight from the JSON-LD schema (no AI needed). Claude
+  // Haiku only does the lightweight structured work: parse free-text ingredient
+  // strings into objects and map the site's keywords onto our tag vocabulary.
+  let ingredients: Record<string, unknown>[] = [];
+  let tags: string[] = [];
   if (rawIngredients.length > 0) {
     try {
       const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5',
         max_tokens: 1024,
+        output_config: {
+          format: {
+            type: 'json_schema',
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                ingredients: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                      name: { type: 'string', description: 'ingredient name only, no prep instructions' },
+                      qty: { type: 'number', description: '0 if unclear' },
+                      unit: { type: 'string', description: 'empty string if none' },
+                      cat: { type: 'string', enum: ['proteins', 'produce', 'dairy', 'pantry'] },
+                    },
+                    required: ['name', 'qty', 'unit', 'cat'],
+                  },
+                },
+                tags: {
+                  type: 'array',
+                  items: { type: 'string', enum: APP_TAGS },
+                  description: 'choose 0-3 that fit this recipe',
+                },
+              },
+              required: ['ingredients', 'tags'],
+            },
+          },
+        },
         messages: [{
           role: 'user',
-          content: `Parse these recipe ingredients into a JSON array. For each, extract:
-- name: just the ingredient name, no prep instructions
-- qty: numeric quantity (0 if unclear)
-- unit: unit string (empty string if none)
-- cat: one of exactly: proteins, produce, dairy, pantry
+          content: `Recipe: ${rawName}
+Site keywords: ${rawKeywords || '(none)'}
+
+Parse these ingredients and pick fitting tags.
 
 Ingredients:
-${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}
-
-Return ONLY a JSON array, no other text. Example:
-[{"name":"flour","qty":2,"unit":"cups","cat":"pantry"}]`,
+${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
         }],
       });
-      const text = msg.content[0].type === 'text' ? msg.content[0].text : '';
-      const match = text.match(/\[[\s\S]*\]/);
-      if (match) ingredients = JSON.parse(match[0]);
+      const text = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed.ingredients)) ingredients = parsed.ingredients;
+      if (Array.isArray(parsed.tags)) tags = parsed.tags.filter((t: string) => APP_TAGS.includes(t));
     } catch { /* fall back to empty */ }
   }
 
   return NextResponse.json({
     name: rawName,
     sub: rawDescription.replace(/<[^>]+>/g, '').slice(0, 120),
-    tags: rawKeywords.split(',').map((k: string) => k.trim()).filter(Boolean).slice(0, 5),
-    ingredients: (ingredients as Record<string, unknown>[]).map((ing) => ({
+    tags,
+    instructions,
+    ingredients: ingredients.map((ing) => ({
       id: Math.random().toString(36).substring(7),
       recipeId: '',
       name: String(ing.name ?? ''),

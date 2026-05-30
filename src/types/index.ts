@@ -24,6 +24,7 @@ export interface Recipe {
   sub: string;
   tags: string[];
   color: string;
+  instructions?: string | null;
   ingredients: Ingredient[];
 }
 

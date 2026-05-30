@@ -24,7 +24,7 @@ A **family meal planning PWA** that feels like a premium, $1M product. The goal 
 | Database | PostgreSQL via **Neon serverless** |
 | ORM | **Prisma 7** with `@prisma/adapter-neon` |
 | Auth | **Clerk** (`@clerk/nextjs` v7) |
-| AI | Anthropic SDK (`@anthropic-ai/sdk`) — used for URL & photo recipe import |
+| AI | Anthropic SDK (`@anthropic-ai/sdk`) — recipe import via URL, photo & pasted text. URL/text use Haiku (`claude-haiku-4-5`); photo uses Sonnet vision. All use structured outputs (`output_config.format` json_schema) for guaranteed-parseable JSON |
 | Styling | **CSS Modules** + global design tokens in `globals.css` |
 | Icons | **lucide-react** — all UI chrome. Food/recipe emoji kept as user content (in tinted containers) |
 | Fonts | Playfair Display (headings/serif accent) · DM Sans (body) — loaded via Google Fonts |
@@ -46,8 +46,9 @@ src/
 │       ├── recurring/      — PUT recurring meal assignment
 │       ├── prices/         — PUT ingredient price
 │       ├── checked/        — GET/PUT/DELETE shopping check state
-│       ├── import-url/     — POST: AI extracts recipe from a URL
-│       └── import-photo/   — POST: AI extracts recipe from a photo (base64)
+│       ├── import-url/     — POST: parses JSON-LD; Haiku (structured output) for ingredients + tag mapping; instructions come free from schema
+│       ├── import-photo/   — POST: Sonnet vision (structured output) extracts recipe + instructions from a photo (base64)
+│       └── import-text/    — POST: Haiku (structured output) extracts a full recipe from pasted free text
 ├── components/
 │   ├── MealPlannerApp.tsx  — Root client component; owns all modal state, toast, tab routing
 │   ├── Header/             — App title + estimated weekly cost + Clerk auth button
@@ -84,7 +85,7 @@ src/
 ## Data Models
 
 ```ts
-Recipe       { id, userId, emoji, name, sub, tags: string[], color, ingredients: Ingredient[] }
+Recipe       { id, userId, emoji, name, sub, tags: string[], color, instructions?, ingredients: Ingredient[] }
 Ingredient   { id, recipeId, name, qty, unit, cat: IngredientCat, store: Store, noScale: boolean }
 WeekEntry    { id, dayKey, weekYear, weekNum, type: 'empty'|'meal'|'note', recipeId?, guests?, note? }
 RecurringMeal{ id, key: 'brunch'|'lunch', label, recipeId? }
@@ -193,4 +194,5 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 |---|---|
 | 2026-05-24 | Initial CLAUDE.md created — baseline audit of existing codebase |
 | 2026-05-30 | Design refresh Ph1+2: WeekView → vertical day cards + overview dots; lucide-react icons replace emoji chrome; compact header; spacing/radius/elevation/motion tokens; 3-color semantic tags (soft tints); week skeleton loaders; polished empty states |
+| 2026-05-30 | Recipe instructions added end-to-end (`instructions String?` on Recipe; editor textarea; threaded through POST/PUT). AI import overhaul: URL import now reads JSON-LD `recipeInstructions` for free + switched ingredient/tag parsing to Haiku w/ structured output; photo import gains instructions + structured output (still Sonnet vision); new paste-raw-text import (`/api/import-text`, Haiku) for sites without JSON-LD |
 | 2026-05-30 | Design refresh Ph3 (modals): base Modal uses tokens + desktop centered/pop-in (mobile sheet); DayModal cooking/not-cooking toggle + guest stepper + choose-recipe now Lucide icons, chosen-recipe emoji tinted, press states; RecipePicker has Search-icon input + SearchX empty state + tinted recipe avatars; PriceModal token buttons; Toast → floating pill w/ shadow-lg + scale-in |

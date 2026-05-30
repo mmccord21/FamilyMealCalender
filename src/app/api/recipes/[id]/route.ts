@@ -17,7 +17,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
   const { id } = await params;
   const body = await request.json();
-  const { emoji, name, sub, tags, color, ingredients } = body;
+  const { emoji, name, sub, tags, color, instructions, ingredients } = body;
 
   const existing = await prisma.recipe.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) return new NextResponse('Unauthorized', { status: 401 });
@@ -32,6 +32,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       sub: sub || '',
       tags: tags || [],
       color: color || '#888888',
+      instructions: instructions || null,
     },
   });
 

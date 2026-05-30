@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Link2, Camera, Leaf, Package, Plus, ChevronUp, X, Check } from 'lucide-react';
+import { Link2, Camera, FileText, Leaf, Package, Plus, ChevronUp, X, Check } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, Ingredient, IngredientCat, Store } from '@/types';
 import { EMOJIS, CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
@@ -20,6 +20,7 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
   const [name, setName] = useState('');
   const [sub, setSub] = useState('');
   const [tags, setTags] = useState('');
+  const [instructions, setInstructions] = useState('');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   const [showIngForm, setShowIngForm] = useState(false);
@@ -27,8 +28,9 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
     name: string; qty: string; unit: string; cat: IngredientCat; store: Store; noScale: boolean;
   }>({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
 
-  const [importMode, setImportMode] = useState<'url' | null>(null);
+  const [importMode, setImportMode] = useState<'url' | 'text' | null>(null);
   const [importUrl, setImportUrl] = useState('');
+  const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -40,23 +42,47 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       setName(recipe?.name ?? '');
       setSub(recipe?.sub ?? '');
       setTags(recipe?.tags?.join(', ') ?? 'keto');
+      setInstructions(recipe?.instructions ?? '');
       setIngredients(recipe?.ingredients ?? []);
       setShowIngForm(false);
       setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
       setImportMode(null);
       setImportUrl('');
+      setImportText('');
       setImportError('');
     }
   }, [open, recipe]);
 
-  const applyImport = (data: { name: string; sub: string; tags: string[]; ingredients: Ingredient[] }) => {
+  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; ingredients: Ingredient[] }) => {
     setName(data.name);
     setSub(data.sub);
     setTags(data.tags.join(', '));
+    setInstructions(data.instructions ?? '');
     setIngredients(data.ingredients);
     setImportMode(null);
     setImportUrl('');
+    setImportText('');
     setImportError('');
+  };
+
+  const handleTextImport = async () => {
+    if (!importText.trim()) return;
+    setImporting(true);
+    setImportError('');
+    try {
+      const res = await fetch('/api/import-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: importText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      applyImport(data);
+    } catch (e: unknown) {
+      setImportError(e instanceof Error ? e.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleUrlImport = async () => {
@@ -116,6 +142,7 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       name,
       sub,
       tags: tagsArr,
+      instructions: instructions.trim() || null,
       ingredients,
     });
   };
@@ -153,10 +180,17 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
             onClick={() => { setImportMode(importMode === 'url' ? null : 'url'); setImportError(''); }}
             disabled={importing}
           >
-            <Link2 size={14} strokeWidth={2} /> Import from URL
+            <Link2 size={14} strokeWidth={2} /> URL
+          </button>
+          <button
+            className={`${styles.importBtn} ${importMode === 'text' ? styles.importBtnOn : ''}`}
+            onClick={() => { setImportMode(importMode === 'text' ? null : 'text'); setImportError(''); }}
+            disabled={importing}
+          >
+            <FileText size={14} strokeWidth={2} /> Paste Text
           </button>
           <label className={`${styles.importBtn} ${importing ? styles.importBtnDisabled : ''}`}>
-            <Camera size={14} strokeWidth={2} /> Import from Photo
+            <Camera size={14} strokeWidth={2} /> Photo
             <input
               ref={photoInputRef}
               type="file"
@@ -182,6 +216,20 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
             </button>
           </div>
         )}
+        {importMode === 'text' && (
+          <div className={styles.importTextCol}>
+            <textarea
+              className={styles.importTextArea}
+              placeholder="Paste a full recipe here — ingredients and steps…"
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              autoFocus
+            />
+            <button className={styles.importGo} onClick={handleTextImport} disabled={importing || !importText.trim()}>
+              {importing ? '…' : 'Extract Recipe'}
+            </button>
+          </div>
+        )}
         {importing && <div className={styles.importStatus}>Importing recipe…</div>}
         {importError && <div className={styles.importError}>{importError}</div>}
       </div>
@@ -200,6 +248,14 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       <input className={styles.mIn} placeholder="Recipe name…" value={name} onChange={(e) => setName(e.target.value)} />
       <input className={styles.mInSm} placeholder="Short description…" value={sub} onChange={(e) => setSub(e.target.value)} />
       <input className={styles.mInSm} placeholder="Tags — keto, 30 min, date night…" value={tags} onChange={(e) => setTags(e.target.value)} />
+
+      <div className={styles.lbl}>Instructions</div>
+      <textarea
+        className={styles.instrArea}
+        placeholder="Step-by-step instructions…"
+        value={instructions}
+        onChange={(e) => setInstructions(e.target.value)}
+      />
 
       <div className={styles.lbl}>Ingredients</div>
       <div className={styles.ingList}>

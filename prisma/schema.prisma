@@ -17,6 +17,7 @@ model Recipe {
   sub         String?
   tags        String[]
   color       String       @default("#888888")
+  instructions String?
   ingredients Ingredient[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

@@ -37,6 +37,7 @@ export interface WeekEntry {
   recipeId?: string | null;
   guests?: number | null;
   note?: string | null;
+  includeInShopping?: boolean;
 }
 
 export interface RecurringMeal {

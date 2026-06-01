@@ -137,6 +137,81 @@
   text-align: center;
 }
 
+.shopToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f5f0;
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-top: 10px;
+  cursor: pointer;
+  border: 1.5px solid var(--bdr);
+  width: 100%;
+  text-align: left;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  font-family: 'DM Sans', sans-serif;
+}
+.shopToggleRow:active { background: #f2ece4; }
+
+.shopToggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shopToggleIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: var(--bdr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mu);
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.shopIconOn {
+  background: #e4f0e6;
+  color: var(--sage);
+}
+
+.shopToggleLbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--br);
+}
+.shopToggleSub {
+  font-size: 11px;
+  color: var(--mu);
+  margin-top: 1px;
+}
+
+.toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 100px;
+  background: var(--bdr);
+  position: relative;
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease);
+}
+.toggleOn { background: var(--sage); }
+
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 100px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform var(--dur) var(--ease);
+}
+.toggleOn .toggleThumb { transform: translateX(18px); }
+
 .mLbl {
   font-size: 11px;
   letter-spacing: 1px;

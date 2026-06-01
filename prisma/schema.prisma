@@ -41,10 +41,11 @@ model WeekEntry {
   dayKey   String  // Mon | Tue | Wed | Thu | Fri | Sat | Sun
   weekYear Int
   weekNum  Int
-  type     String  // empty | meal | note
-  recipeId String?
-  guests   Int?
-  note     String?
+  type                String  // empty | meal | note
+  recipeId            String?
+  guests              Int?
+  note                String?
+  includeInShopping   Boolean @default(true)
 
   @@unique([userId, dayKey, weekYear, weekNum])
 }

@@ -65,7 +65,7 @@ export function fmtShopAmt(item: ShoppingItem): string {
 
 export function buildShoppingList(
   recipes: Recipe[],
-  weekEntries: { dayKey: string; recipeId?: string | null; guests?: number | null; type: string }[],
+  weekEntries: { dayKey: string; recipeId?: string | null; guests?: number | null; type: string; includeInShopping?: boolean }[],
   recurring: { key: string; recipeId?: string | null }[],
 ): ShoppingItem[] {
   const merged: Record<string, ShoppingItem> = {};
@@ -100,6 +100,7 @@ export function buildShoppingList(
   // Week days
   weekEntries.forEach((e) => {
     if (e.type !== 'meal' || !e.recipeId) return;
+    if (e.includeInShopping === false) return;
     const recipe = recipes.find((r) => r.id === e.recipeId);
     if (!recipe) return;
     addIngs(recipe.ingredients, e.dayKey, (e.guests ?? BASE_GUESTS) / BASE_GUESTS);

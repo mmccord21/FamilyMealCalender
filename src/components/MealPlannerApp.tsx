@@ -9,11 +9,12 @@ import ShopView from '@/components/ShopView/ShopView';
 import DayModal from '@/components/DayModal/DayModal';
 import RecipePickerModal from '@/components/RecipePickerModal/RecipePickerModal';
 import RecipeEditorModal from '@/components/RecipeEditorModal/RecipeEditorModal';
+import RecipeViewerModal from '@/components/RecipeViewerModal/RecipeViewerModal';
 import PriceModal from '@/components/PriceModal/PriceModal';
 import Toast from '@/components/Toast/Toast';
 
 import { useMealStore } from '@/store/useMealStore';
-import { buildShoppingList, calcTotal } from '@/lib/helpers';
+import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
 import type { Recipe, WeekEntry, RecurringMeal, ManualShoppingItem } from '@/types';
 
 interface Props {
@@ -42,6 +43,11 @@ export default function MealPlannerApp({
   const [recipeModalOpen, setRecipeModalOpen] = useState(false);
   const [editRecipeId, setEditRecipeId] = useState<string | null>(null);
   
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerRecipeId, setViewerRecipeId] = useState<string | null>(null);
+  const [viewerDayKey, setViewerDayKey] = useState<string | null>(null);
+  const [viewerDayIdx, setViewerDayIdx] = useState(0);
+
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceItemKey, setPriceItemKey] = useState('');
   const [priceItemName, setPriceItemName] = useState('');
@@ -95,6 +101,12 @@ export default function MealPlannerApp({
               setPickedRecipeId(e?.type === 'meal' ? (e.recipeId || null) : null);
               setDayModalOpen(true);
             }}
+            onViewRecipe={(recipeId, dayKey, dayIdx) => {
+              setViewerRecipeId(recipeId);
+              setViewerDayKey(dayKey);
+              setViewerDayIdx(dayIdx);
+              setViewerOpen(true);
+            }}
             onOpenRecurring={(key) => {
               setEditRecurKey(key);
               setPickerTarget('recurring');
@@ -107,6 +119,11 @@ export default function MealPlannerApp({
           <RecipesView
             recipes={store.recipes}
             prices={store.prices}
+            onView={(id) => {
+              setViewerRecipeId(id);
+              setViewerDayKey(null);
+              setViewerOpen(true);
+            }}
             onOpenEditor={(id) => {
               setEditRecipeId(id);
               setRecipeModalOpen(true);
@@ -136,6 +153,30 @@ export default function MealPlannerApp({
       </div>
 
       {/* Modals */}
+      <RecipeViewerModal
+        open={viewerOpen}
+        recipe={store.recipes.find((r) => r.id === viewerRecipeId) || null}
+        guests={
+          viewerDayKey
+            ? (store.weekEntries.find((e) => e.dayKey === viewerDayKey)?.guests ?? BASE_GUESTS)
+            : BASE_GUESTS
+        }
+        onClose={() => setViewerOpen(false)}
+        onEditDay={viewerDayKey ? () => {
+          setViewerOpen(false);
+          setEditDayKey(viewerDayKey);
+          setEditDayIdx(viewerDayIdx);
+          const e = store.weekEntries.find((we) => we.dayKey === viewerDayKey);
+          setPickedRecipeId(e?.type === 'meal' ? (e.recipeId || null) : null);
+          setDayModalOpen(true);
+        } : undefined}
+        onEditRecipe={() => {
+          setViewerOpen(false);
+          setEditRecipeId(viewerRecipeId);
+          setRecipeModalOpen(true);
+        }}
+      />
+
       <DayModal
         open={dayModalOpen}
         dayKey={editDayKey}
@@ -149,7 +190,17 @@ export default function MealPlannerApp({
         onSave={(e) => {
           store.saveDay(editDayKey, e);
           setDayModalOpen(false);
-          showToast('Saved ✓');
+          if (e.type === 'meal' && e.recipeId) {
+            const r = store.recipes.find((rec) => rec.id === e.recipeId);
+            const count = r?.ingredients.length ?? 0;
+            showToast(
+              e.includeInShopping !== false
+                ? `${r?.name ?? 'Meal'} saved · ${count} item${count !== 1 ? 's' : ''} added to list`
+                : `${r?.name ?? 'Meal'} saved · not in grocery list`
+            );
+          } else {
+            showToast('Saved ✓');
+          }
         }}
         onClear={() => {
           store.saveDay(editDayKey, { type: 'empty', recipeId: null, guests: null, note: null });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UtensilsCrossed, CalendarOff, Plus, Minus, ChevronRight, Trash2 } from 'lucide-react';
+import { UtensilsCrossed, CalendarOff, Plus, Minus, ChevronRight, Trash2, ShoppingCart } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, WeekEntry } from '@/types';
 import { DAY_FULL, QUICK_NOTES, BASE_GUESTS, getWeekDates } from '@/lib/helpers';
@@ -36,13 +36,14 @@ export default function DayModal({
   const [guests, setGuests] = useState(entry?.guests ?? BASE_GUESTS);
   const [note, setNote] = useState(entry?.note ?? '');
   const [pickedNote, setPickedNote] = useState('');
+  const [includeInShopping, setIncludeInShopping] = useState(entry?.includeInShopping !== false);
 
   const recipe = pickedRecipeId ? recipes.find((r) => r.id === pickedRecipeId) : null;
 
   function handleSave() {
     if (mode === 'cooking') {
       if (!pickedRecipeId) return;
-      onSave({ type: 'meal', recipeId: pickedRecipeId, guests });
+      onSave({ type: 'meal', recipeId: pickedRecipeId, guests, includeInShopping });
     } else {
       onSave({ type: 'note', note: note.trim() || 'Note' });
     }
@@ -98,6 +99,29 @@ export default function DayModal({
               <button className={styles.gsBtn} onClick={() => setGuests(Math.min(20, guests + 1))} aria-label="More guests"><Plus size={16} strokeWidth={2.5} /></button>
             </div>
           </div>
+
+          {recipe && (
+            <button
+              className={styles.shopToggleRow}
+              onClick={() => setIncludeInShopping((v) => !v)}
+              type="button"
+            >
+              <div className={styles.shopToggleLeft}>
+                <span className={`${styles.shopToggleIcon} ${includeInShopping ? styles.shopIconOn : ''}`}>
+                  <ShoppingCart size={16} strokeWidth={2} />
+                </span>
+                <div>
+                  <div className={styles.shopToggleLbl}>Add to grocery list</div>
+                  <div className={styles.shopToggleSub}>
+                    {recipe.ingredients.length} ingredient{recipe.ingredients.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+              <div className={`${styles.toggle} ${includeInShopping ? styles.toggleOn : ''}`}>
+                <div className={styles.toggleThumb} />
+              </div>
+            </button>
+          )}
         </div>
       ) : (
         <div>

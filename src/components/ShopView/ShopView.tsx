@@ -9,6 +9,7 @@ import styles from './ShopView.module.css';
 interface Props {
   shoppingList: ShoppingItem[];
   checkedItems: Record<string, boolean>;
+  hiddenItems: Record<string, boolean>;
   prices: Record<string, number>;
   qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
@@ -20,14 +21,17 @@ interface Props {
   onAddManualItem: (name: string) => void;
   onDeleteManualItem: (id: string) => void;
   onSetQtyOverride: (itemKey: string, qty: number) => void;
+  onHideItem: (itemKey: string) => void;
+  onRestoreHidden: () => void;
   onAddStore: (name: string) => void;
   onDeleteStore: (id: string) => void;
 }
 
 export default function ShopView({
-  shoppingList, checkedItems, prices, qtyOverrides, manualItems, stores = [],
+  shoppingList, checkedItems, hiddenItems, prices, qtyOverrides, manualItems, stores = [],
   onToggleCheck, onResetChecked, onOpenPrice, onCopy,
   onAddManualItem, onDeleteManualItem, onSetQtyOverride,
+  onHideItem, onRestoreHidden,
   onAddStore, onDeleteStore,
 }: Props) {
   const [storeF, setStoreF] = useState<string>('all');
@@ -38,7 +42,9 @@ export default function ShopView({
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
-  const visible = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store === storeF);
+  const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store === storeF);
+  const visible = storeFiltered.filter((i) => !hiddenItems[i.name.toLowerCase().trim()]);
+  const hiddenCount = shoppingList.filter((i) => hiddenItems[i.name.toLowerCase().trim()]).length;
   const checkedCount = visible.filter((i) => checkedItems[i.name.toLowerCase().trim()]).length
     + manualItems.filter((i) => checkedItems[`m:${i.id}`]).length;
   const totalCount = visible.length + manualItems.length;
@@ -143,6 +149,13 @@ export default function ShopView({
         </div>
       </div>
 
+      {hiddenCount > 0 && (
+        <div className={styles.hiddenBar}>
+          <span>{hiddenCount} item{hiddenCount !== 1 ? 's' : ''} hidden</span>
+          <button className={styles.restoreBtn} onClick={onRestoreHidden}>Restore</button>
+        </div>
+      )}
+
       {shoppingList.length === 0 && manualItems.length === 0 ? (
         <div className={styles.shopEmpty}>
           <div className={styles.shopEmptyIcon}><CalendarDays size={28} strokeWidth={1.75} /></div>
@@ -230,6 +243,13 @@ export default function ShopView({
                         >
                           {p ? `$${p}` : 'set $'}
                         </span>
+                        <button
+                          className={styles.hideBtn}
+                          onClick={(e) => { e.stopPropagation(); onHideItem(mk); }}
+                          aria-label="Remove from list"
+                        >
+                          <X size={13} strokeWidth={2.5} />
+                        </button>
                       </div>
                     </div>
                   );

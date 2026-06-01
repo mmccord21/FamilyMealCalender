@@ -72,11 +72,17 @@
 
 .qtyInput { font-size: 12.5px; font-family: 'DM Sans', sans-serif; color: var(--br); border: 1.5px solid var(--terra); border-radius: 6px; padding: 3px 7px; width: 64px; background: var(--sur); outline: none; box-shadow: 0 0 0 3px rgba(181,82,42,0.1); }
 
-.iRight { flex-shrink: 0; margin-top: 1px; }
+.iRight { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 1px; }
 .priceBadge { font-size: 13px; color: var(--mu); background: #f5efe8; border-radius: 6px; padding: 3px 8px; cursor: pointer; border: 1px solid transparent; display: block; }
 .priceBadge:active { border-color: var(--terra); }
 .priceSet { color: var(--terra); font-weight: 600; }
 .priceNone { color: #ccc; }
+.hideBtn { width: 26px; height: 26px; border-radius: 6px; border: none; background: none; color: #d4c4b4; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.hideBtn:active { color: var(--terra); background: #fdf0eb; }
+
+.hiddenBar { display: flex; align-items: center; justify-content: space-between; background: #f5efe8; border-radius: var(--r-sm); padding: 8px 12px; margin-bottom: 13px; font-size: 13px; color: var(--mu); }
+.restoreBtn { background: none; border: none; font-size: 13px; font-weight: 600; color: var(--terra); cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 2px 0; transition: opacity var(--dur) var(--ease); }
+.restoreBtn:active { opacity: 0.7; }
 
 .totalBar { background: var(--br); border-radius: 15px; padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
 .tLbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }

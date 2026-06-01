@@ -8,6 +8,7 @@ interface MealState {
   recurring: RecurringMeal[];
   prices: Record<string, number>;
   checkedItems: Record<string, boolean>;
+  hiddenItems: Record<string, boolean>;
   qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
   stores: UserStore[];
@@ -48,6 +49,8 @@ interface MealState {
   resetChecked: () => Promise<void>;
   addManualItem: (name: string) => Promise<void>;
   deleteManualItem: (id: string) => Promise<void>;
+  hideItem: (itemKey: string) => Promise<void>;
+  restoreHiddenItems: () => Promise<void>;
   copyWeek: (fromWeekYear: number, fromWeekNum: number) => Promise<void>;
 }
 
@@ -88,6 +91,7 @@ export const useMealStore = create<MealState>((set, get) => ({
   recurring: [],
   prices: {},
   checkedItems: {},
+  hiddenItems: {},
   qtyOverrides: {},
   manualItems: [],
   stores: [],
@@ -134,7 +138,13 @@ export const useMealStore = create<MealState>((set, get) => ({
         if (overrideRes.ok) qtyOverrides = await overrideRes.json();
       } catch { /* non-critical */ }
 
-      set({ dayMeals: data.meals, checkedItems: checked, manualItems, qtyOverrides, weekLoading: false });
+      let hiddenItems: Record<string, boolean> = {};
+      try {
+        const hiddenRes = await fetch(`/api/hidden-items?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
+        if (hiddenRes.ok) hiddenItems = await hiddenRes.json();
+      } catch { /* non-critical */ }
+
+      set({ dayMeals: data.meals, checkedItems: checked, manualItems, qtyOverrides, hiddenItems, weekLoading: false });
     } catch {
       set({ dayMeals: [], checkedItems: {}, weekLoading: false });
     }
@@ -495,6 +505,22 @@ export const useMealStore = create<MealState>((set, get) => ({
   deleteManualItem: async (id) => {
     set((state) => ({ manualItems: state.manualItems.filter((i) => i.id !== id) }));
     await fetch(`/api/manual-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
+  hideItem: async (itemKey) => {
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
+    set((state) => ({ hiddenItems: { ...state.hiddenItems, [itemKey]: true } }));
+    await fetch('/api/hidden-items', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemKey, weekYear, weekNum }),
+    });
+  },
+
+  restoreHiddenItems: async () => {
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
+    set({ hiddenItems: {} });
+    await fetch(`/api/hidden-items?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' });
   },
 
   copyWeek: async (fromWeekYear, fromWeekNum) => {

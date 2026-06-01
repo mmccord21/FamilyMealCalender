@@ -23,12 +23,13 @@ interface Props {
   initialRecurring: RecurringMeal[];
   initialPrices: Record<string, number>;
   initialChecked: Record<string, boolean>;
+  initialHidden: Record<string, boolean>;
   initialManualItems: ManualShoppingItem[];
   initialStores: UserStore[];
 }
 
 export default function MealPlannerApp({
-  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialManualItems, initialStores
+  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialHidden, initialManualItems, initialStores
 }: Props) {
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
@@ -64,6 +65,7 @@ export default function MealPlannerApp({
       recurring: initialRecurring,
       prices: initialPrices,
       checkedItems: initialChecked,
+      hiddenItems: initialHidden,
       manualItems: initialManualItems,
       stores: initialStores,
     });
@@ -170,6 +172,7 @@ export default function MealPlannerApp({
           <ShopView
             shoppingList={shoppingList}
             checkedItems={store.checkedItems}
+            hiddenItems={store.hiddenItems}
             prices={store.prices}
             qtyOverrides={store.qtyOverrides}
             manualItems={store.manualItems}
@@ -186,6 +189,8 @@ export default function MealPlannerApp({
             onAddManualItem={store.addManualItem}
             onDeleteManualItem={store.deleteManualItem}
             onSetQtyOverride={(itemKey, qty) => store.setQtyOverride(itemKey, qty)}
+            onHideItem={store.hideItem}
+            onRestoreHidden={store.restoreHiddenItems}
             onAddStore={store.addStore}
             onDeleteStore={store.deleteStore}
           />

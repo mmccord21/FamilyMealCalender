@@ -17,13 +17,14 @@ export default async function Home() {
         initialRecurring={[]}
         initialPrices={{}}
         initialChecked={{}}
+        initialHidden={{}}
         initialManualItems={[]}
         initialStores={[]}
       />
     );
   }
 
-  const [recipes, dayMeals, recurring, prices, checks, manualItems, userStores] = await Promise.all([
+  const [recipes, dayMeals, recurring, prices, checks, hiddenRows, manualItems, userStores] = await Promise.all([
     prisma.recipe.findMany({ where: { userId }, include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
     prisma.dayMeal.findMany({
       where: { userId, weekYear, weekNum },
@@ -33,6 +34,7 @@ export default async function Home() {
     prisma.recurringMeal.findMany({ where: { userId } }),
     prisma.ingredientPrice.findMany({ where: { userId } }),
     prisma.shoppingCheck.findMany({ where: { userId, weekYear, weekNum } }),
+    prisma.shoppingHiddenItem.findMany({ where: { userId, weekYear, weekNum } }),
     prisma.manualShoppingItem.findMany({ where: { userId, weekYear, weekNum } }),
     prisma.userStore.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
   ]);
@@ -43,6 +45,9 @@ export default async function Home() {
   const checksObj: Record<string, boolean> = {};
   checks.forEach((c) => { checksObj[c.itemKey] = c.checked; });
 
+  const hiddenObj: Record<string, boolean> = {};
+  hiddenRows.forEach((r) => { hiddenObj[r.itemKey] = true; });
+
   return (
     <MealPlannerApp
       initialRecipes={recipes as any}
@@ -50,6 +55,7 @@ export default async function Home() {
       initialRecurring={recurring}
       initialPrices={pricesObj}
       initialChecked={checksObj}
+      initialHidden={hiddenObj}
       initialManualItems={manualItems}
       initialStores={userStores}
     />

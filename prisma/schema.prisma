@@ -111,6 +111,16 @@ model ShoppingQtyOverride {
   @@unique([userId, itemKey, weekYear, weekNum])
 }
 
+model ShoppingHiddenItem {
+  id       String @id @default(cuid())
+  userId   String
+  itemKey  String
+  weekYear Int
+  weekNum  Int
+
+  @@unique([userId, itemKey, weekYear, weekNum])
+}
+
 model UserStore {
   id     String @id @default(cuid())
   userId String

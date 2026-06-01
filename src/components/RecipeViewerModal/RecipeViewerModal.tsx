@@ -3,7 +3,7 @@
 import { X, Edit3, Calendar, Users } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
-import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS } from '@/lib/helpers';
+import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
 import styles from './RecipeViewerModal.module.css';
 
 interface Props {
@@ -84,11 +84,10 @@ export default function RecipeViewerModal({
                 <div className={styles.catLbl} style={{ color }}>{label}</div>
                 {items.map((ing) => {
                   const qty = ing.noScale ? ing.qty : ing.qty * scale;
-                  const display = Number.isInteger(qty) ? qty : parseFloat(qty.toFixed(1));
                   return (
                     <div key={ing.id} className={styles.ingRow}>
                       <span className={styles.ingName}>{ing.name}</span>
-                      <span className={styles.ingAmt}>{display}{ing.unit ? ` ${ing.unit}` : ''}</span>
+                      <span className={styles.ingAmt}>{fmtQ(qty)}{ing.unit ? ` ${ing.unit}` : ''}</span>
                     </div>
                   );
                 })}

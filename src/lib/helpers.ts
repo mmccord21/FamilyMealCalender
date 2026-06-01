@@ -48,11 +48,15 @@ export function dayColor(key: string): string {
 export function fmtQ(n: number): string {
   if (!n) return '0';
   if (n === Math.floor(n)) return `${n}`;
-  const f = n % 1;
-  if (Math.abs(f - 0.25) < 0.01) return `${Math.floor(n)}¼`;
-  if (Math.abs(f - 0.5)  < 0.01) return `${Math.floor(n)}½`;
-  if (Math.abs(f - 0.75) < 0.01) return `${Math.floor(n)}¾`;
-  return n.toFixed(1);
+  const whole = Math.floor(n);
+  const f = n - whole;
+  const prefix = whole > 0 ? `${whole} ` : '';
+  if (Math.abs(f - 1/4) < 0.02) return `${prefix}¼`;
+  if (Math.abs(f - 1/3) < 0.02) return `${prefix}⅓`;
+  if (Math.abs(f - 1/2) < 0.02) return `${prefix}½`;
+  if (Math.abs(f - 2/3) < 0.02) return `${prefix}⅔`;
+  if (Math.abs(f - 3/4) < 0.02) return `${prefix}¾`;
+  return n % 1 === 0 ? `${n}` : n.toFixed(2).replace(/\.?0+$/, '');
 }
 
 export function fmtShopAmt(item: ShoppingItem): string {

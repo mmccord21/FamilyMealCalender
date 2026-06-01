@@ -13,6 +13,7 @@ interface Props {
   loading?: boolean;
   onShiftWeek: (dir: number) => void;
   onOpenDay: (key: string, idx: number) => void;
+  onViewRecipe: (recipeId: string, dayKey: string, dayIdx: number) => void;
   onOpenRecurring: (key: string) => void;
 }
 
@@ -22,7 +23,7 @@ const DAY_ABBR: Record<string, string> = {
 
 export default function WeekView({
   recipes, weekEntries, recurring, weekOffset, loading = false,
-  onShiftWeek, onOpenDay, onOpenRecurring,
+  onShiftWeek, onOpenDay, onViewRecipe, onOpenRecurring,
 }: Props) {
   const dates = getWeekDates(weekOffset);
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -106,7 +107,11 @@ export default function WeekView({
             <div
               key={key}
               className={`${styles.dayRow} ${today ? styles.today : ''}`}
-              onClick={() => onOpenDay(key, i)}
+              onClick={() =>
+                e.type === 'meal' && recipe
+                  ? onViewRecipe(recipe.id, key, i)
+                  : onOpenDay(key, i)
+              }
             >
               <div className={styles.dayBadge}>
                 <div className={styles.dayAbbr}>{DAY_ABBR[key]}</div>

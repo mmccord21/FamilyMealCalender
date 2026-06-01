@@ -8,10 +8,11 @@ import { useState } from 'react';
 interface Props {
   recipes: Recipe[];
   prices: Record<string, number>;
+  onView: (id: string) => void;
   onOpenEditor: (id: string | null) => void;
 }
 
-export default function RecipesView({ recipes, prices, onOpenEditor }: Props) {
+export default function RecipesView({ recipes, prices, onView, onOpenEditor }: Props) {
   const [query, setQuery] = useState('');
 
   const filtered = recipes.filter((r) =>
@@ -52,7 +53,7 @@ export default function RecipesView({ recipes, prices, onOpenEditor }: Props) {
             }, 0);
 
             return (
-              <div key={r.id} className={styles.recipeCard} onClick={() => onOpenEditor(r.id)}>
+              <div key={r.id} className={styles.recipeCard} onClick={() => onView(r.id)}>
                 <span className={styles.rcEmoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
                 <div className={styles.rcInfo}>
                   <div className={styles.rcName}>{r.name}</div>

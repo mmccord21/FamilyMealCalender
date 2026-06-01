@@ -15,6 +15,9 @@ export async function POST(
 
   const { recipeId, sortOrder, includeInShopping } = await request.json();
 
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+  if (!recipe || recipe.userId !== userId) return new NextResponse('Not found', { status: 404 });
+
   const dmr = await prisma.dayMealRecipe.create({
     data: {
       dayMealId: id,

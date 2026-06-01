@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, BookOpen, Plus, SearchX } from 'lucide-react';
+import { Search, BookOpen, Plus, SearchX, Clock } from 'lucide-react';
 import type { Recipe } from '@/types';
 import styles from './RecipesView.module.css';
 import { useState } from 'react';
@@ -60,6 +60,16 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
                   <div className={styles.rcMeta}>
                     {r.sub} · {r.ingredients.length} ingredient{r.ingredients.length === 1 ? '' : 's'}
                   </div>
+                  {(r.prepTime || r.cookTime) && (
+                    <div className={styles.rcTime}>
+                      <Clock size={11} strokeWidth={2} />
+                      {r.prepTime && r.cookTime
+                        ? `${r.prepTime} min prep · ${r.cookTime} min cook`
+                        : r.prepTime
+                        ? `${r.prepTime} min prep`
+                        : `${r.cookTime} min cook`}
+                    </div>
+                  )}
                 </div>
                 {totalPrice > 0 && <span className={styles.rcPrice}>${totalPrice.toFixed(2)}</span>}
               </div>

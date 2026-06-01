@@ -15,7 +15,7 @@ import Toast from '@/components/Toast/Toast';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
-import type { Recipe, DayMeal, RecurringMeal, ManualShoppingItem } from '@/types';
+import type { Recipe, DayMeal, RecurringMeal, ManualShoppingItem, UserStore } from '@/types';
 
 interface Props {
   initialRecipes: Recipe[];
@@ -24,14 +24,15 @@ interface Props {
   initialPrices: Record<string, number>;
   initialChecked: Record<string, boolean>;
   initialManualItems: ManualShoppingItem[];
+  initialStores: UserStore[];
 }
 
 export default function MealPlannerApp({
-  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialManualItems
+  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialManualItems, initialStores
 }: Props) {
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
-  const [toastUndo, setToastUndo] = useState<(() => void) | null>(null);
+  const [toastAction, setToastAction] = useState<{ label: string; onClick: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [dayModalOpen, setDayModalOpen] = useState(false);
@@ -64,26 +65,27 @@ export default function MealPlannerApp({
       prices: initialPrices,
       checkedItems: initialChecked,
       manualItems: initialManualItems,
+      stores: initialStores,
     });
-  }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked]);
+    if (initialStores.length === 0) {
+      useMealStore.getState().fetchStores();
+    }
+    useMealStore.getState().fetchTemplates();
+  }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialStores]);
 
   const dismissToast = () => {
     setToastMsg('');
-    setToastUndo(null);
+    setToastAction(null);
   };
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, opts?: { action?: { label: string; onClick: () => void } }) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToastMsg(msg);
-    setToastUndo(null);
-    toastTimer.current = setTimeout(dismissToast, 2500);
-  };
-
-  const showToastWithUndo = (msg: string, undo: () => void) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToastMsg(msg);
-    setToastUndo(() => undo);
-    toastTimer.current = setTimeout(dismissToast, 4000);
+    const action = opts?.action
+      ? { label: opts.action.label, onClick: () => { opts.action!.onClick(); dismissToast(); } }
+      : null;
+    setToastAction(action);
+    toastTimer.current = setTimeout(dismissToast, action ? 5500 : 2500);
   };
 
   const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring);
@@ -106,6 +108,7 @@ export default function MealPlannerApp({
             recurring={store.recurring}
             weekOffset={store.weekOffset}
             loading={store.weekLoading}
+            templates={store.templates}
             onShiftWeek={store.setWeekOffset}
             onOpenDay={(key, idx) => {
               setEditDayKey(key);
@@ -124,6 +127,25 @@ export default function MealPlannerApp({
               setPickerForMealId(null);
               setPickerOpen(true);
             }}
+            onCopyWeek={async (fromWeekYear, fromWeekNum) => {
+              await store.copyWeek(fromWeekYear, fromWeekNum);
+              showToast('Week copied');
+            }}
+            onAddRecurring={async (label) => {
+              await store.addRecurring(label);
+              showToast('Recurring meal added');
+            }}
+            onDeleteRecurring={(key) => store.deleteRecurring(key)}
+            onRenameRecurring={(key, label) => store.renameRecurring(key, label)}
+            onSaveTemplate={async (name) => {
+              await store.saveTemplate(name);
+              showToast('Template saved ✓');
+            }}
+            onApplyTemplate={async (id) => {
+              await store.applyTemplate(id);
+              showToast('Template applied');
+            }}
+            onDeleteTemplate={(id) => store.deleteTemplate(id)}
           />
         </div>
 
@@ -149,7 +171,9 @@ export default function MealPlannerApp({
             shoppingList={shoppingList}
             checkedItems={store.checkedItems}
             prices={store.prices}
+            qtyOverrides={store.qtyOverrides}
             manualItems={store.manualItems}
+            stores={store.stores}
             onToggleCheck={store.toggleCheck}
             onResetChecked={store.resetChecked}
             onCopy={handleCopyList}
@@ -161,6 +185,9 @@ export default function MealPlannerApp({
             }}
             onAddManualItem={store.addManualItem}
             onDeleteManualItem={store.deleteManualItem}
+            onSetQtyOverride={(itemKey, qty) => store.setQtyOverride(itemKey, qty)}
+            onAddStore={store.addStore}
+            onDeleteStore={store.deleteStore}
           />
         </div>
       </div>
@@ -196,7 +223,12 @@ export default function MealPlannerApp({
           setPickerOpen(true);
         }}
         onToggleInShopping={(added, undo) => {
-          showToastWithUndo(added ? 'Added to grocery list' : 'Removed from grocery list', undo);
+          showToast(added ? 'Added to grocery list' : 'Removed from grocery list', {
+            action: { label: 'Undo', onClick: undo },
+          });
+        }}
+        onDeleteMeal={(cancel) => {
+          showToast('Meal deleted', { action: { label: 'Undo', onClick: cancel } });
         }}
       />
 
@@ -223,6 +255,7 @@ export default function MealPlannerApp({
       <RecipeEditorModal
         open={recipeModalOpen}
         recipe={store.recipes.find((r) => r.id === editRecipeId) || null}
+        stores={store.stores}
         onClose={() => setRecipeModalOpen(false)}
         onSave={async (r) => {
           try {
@@ -233,10 +266,19 @@ export default function MealPlannerApp({
             showToast('Failed to save recipe');
           }
         }}
-        onDelete={(id) => {
-          store.deleteRecipe(id);
+        onDelete={async (id) => {
+          const cancel = await store.deleteRecipe(id);
           setRecipeModalOpen(false);
-          showToast('Recipe deleted');
+          showToast('Recipe deleted', { action: { label: 'Undo', onClick: cancel } });
+        }}
+        onDuplicate={async (r) => {
+          try {
+            await store.saveRecipe(r);
+            setRecipeModalOpen(false);
+            showToast('Recipe duplicated');
+          } catch {
+            showToast('Failed to duplicate recipe');
+          }
         }}
       />
 
@@ -257,7 +299,7 @@ export default function MealPlannerApp({
       <Toast
         visible={!!toastMsg}
         message={toastMsg}
-        onUndo={toastUndo ? () => { toastUndo(); dismissToast(); } : undefined}
+        action={toastAction ?? undefined}
       />
     </div>
   );

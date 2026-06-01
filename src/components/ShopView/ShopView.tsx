@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { ShoppingCart, Leaf, Package, Copy, Check, CalendarDays, Plus, X } from 'lucide-react';
-import type { Store, ShoppingItem, ManualShoppingItem } from '@/types';
+import { useState, useRef } from 'react';
+import { ShoppingCart, ShoppingBag, Copy, Check, CalendarDays, Plus, X, Settings2 } from 'lucide-react';
+import type { ShoppingItem, ManualShoppingItem, UserStore } from '@/types';
 import { CATS, fmtShopAmt } from '@/lib/helpers';
 import styles from './ShopView.module.css';
 
@@ -10,22 +10,33 @@ interface Props {
   shoppingList: ShoppingItem[];
   checkedItems: Record<string, boolean>;
   prices: Record<string, number>;
+  qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
+  stores: UserStore[];
   onToggleCheck: (itemKey: string, checked: boolean) => void;
   onResetChecked: () => void;
   onOpenPrice: (itemKey: string, name: string, amt: string) => void;
   onCopy: (txt: string) => void;
   onAddManualItem: (name: string) => void;
   onDeleteManualItem: (id: string) => void;
+  onSetQtyOverride: (itemKey: string, qty: number) => void;
+  onAddStore: (name: string) => void;
+  onDeleteStore: (id: string) => void;
 }
 
 export default function ShopView({
-  shoppingList, checkedItems, prices, manualItems,
+  shoppingList, checkedItems, prices, qtyOverrides, manualItems, stores = [],
   onToggleCheck, onResetChecked, onOpenPrice, onCopy,
-  onAddManualItem, onDeleteManualItem,
+  onAddManualItem, onDeleteManualItem, onSetQtyOverride,
+  onAddStore, onDeleteStore,
 }: Props) {
-  const [storeF, setStoreF] = useState<Store | 'all'>('all');
+  const [storeF, setStoreF] = useState<string>('all');
+  const [showStoreManager, setShowStoreManager] = useState(false);
+  const [newStoreName, setNewStoreName] = useState('');
   const [newItem, setNewItem] = useState('');
+  const [editingQty, setEditingQty] = useState<string | null>(null);
+  const [qtyDraft, setQtyDraft] = useState('');
+  const qtyInputRef = useRef<HTMLInputElement>(null);
 
   const visible = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store === storeF);
   const checkedCount = visible.filter((i) => checkedItems[i.name.toLowerCase().trim()]).length
@@ -33,6 +44,12 @@ export default function ShopView({
   const totalCount = visible.length + manualItems.length;
 
   const total = visible.reduce((s, item) => s + (prices[item.name.toLowerCase().trim()] || 0), 0);
+
+  const commitQty = (mk: string) => {
+    const n = parseFloat(qtyDraft);
+    if (!isNaN(n) && n > 0) onSetQtyOverride(mk, n);
+    setEditingQty(null);
+  };
 
   const handleAdd = () => {
     const t = newItem.trim();
@@ -60,13 +77,44 @@ export default function ShopView({
     onCopy(txt);
   };
 
+  const handleAddStore = () => {
+    const t = newStoreName.trim();
+    if (!t) return;
+    onAddStore(t);
+    setNewStoreName('');
+  };
+
   return (
     <div className={styles.view}>
       <div className={styles.filterRow}>
         <button className={`${styles.sfBtn} ${storeF === 'all' ? styles.on : ''}`} onClick={() => setStoreF('all')}><ShoppingCart size={14} strokeWidth={2} /> All</button>
-        <button className={`${styles.sfBtn} ${storeF === 'sprouts' ? styles.on : ''}`} onClick={() => setStoreF('sprouts')}><Leaf size={14} strokeWidth={2} /> Sprouts</button>
-        <button className={`${styles.sfBtn} ${storeF === 'costco' ? styles.on : ''}`} onClick={() => setStoreF('costco')}><Package size={14} strokeWidth={2} /> Costco</button>
+        {stores.map((s) => (
+          <button key={s.id} className={`${styles.sfBtn} ${storeF === s.name ? styles.on : ''}`} onClick={() => setStoreF(s.name)}>
+            <ShoppingBag size={14} strokeWidth={2} /> {s.name}
+          </button>
+        ))}
       </div>
+
+      {showStoreManager && (
+        <div className={styles.storePanel}>
+          {stores.map((s) => (
+            <div key={s.id} className={styles.storePanelItem}>
+              <span className={styles.storePanelName}>{s.name}</span>
+              <button className={styles.storePanelDel} onClick={() => { onDeleteStore(s.id); if (storeF === s.name) setStoreF('all'); }} aria-label={`Delete ${s.name}`}><X size={14} strokeWidth={2.5} /></button>
+            </div>
+          ))}
+          <div className={styles.storePanelAdd}>
+            <input
+              className={styles.storePanelInput}
+              placeholder="New store name…"
+              value={newStoreName}
+              onChange={(e) => setNewStoreName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddStore()}
+            />
+            <button className={styles.storePanelBtn} onClick={handleAddStore} disabled={!newStoreName.trim()}>Add</button>
+          </div>
+        </div>
+      )}
 
       <div className={styles.addRow}>
         <input
@@ -83,7 +131,12 @@ export default function ShopView({
       </div>
 
       <div className={styles.shopHdr}>
-        <span className={styles.prog}><strong>{checkedCount}</strong> of <strong>{totalCount}</strong> checked</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={styles.prog}><strong>{checkedCount}</strong> of <strong>{totalCount}</strong> checked</span>
+          <button className={styles.manageLink} onClick={() => setShowStoreManager((v) => !v)} aria-label="Manage stores">
+            <Settings2 size={13} strokeWidth={2} />
+          </button>
+        </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className={`${styles.btnSm} ${styles.btnC}`} onClick={handleCopy}><Copy size={13} strokeWidth={2} /> Copy</button>
           <button className={`${styles.btnSm} ${styles.btnR}`} onClick={onResetChecked}>Reset</button>
@@ -120,16 +173,54 @@ export default function ShopView({
                       </div>
                       <div className={styles.iInfo}>
                         <div className={styles.iName}>{item.name}</div>
-                        <div className={styles.iAmt}>{fmtShopAmt(item)}</div>
+                        <div className={styles.iAmt}>
+                          {editingQty === mk ? (
+                            <input
+                              ref={qtyInputRef}
+                              className={styles.qtyInput}
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={qtyDraft}
+                              autoFocus
+                              onChange={(e) => setQtyDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { e.preventDefault(); commitQty(mk); }
+                                if (e.key === 'Escape') setEditingQty(null);
+                              }}
+                              onBlur={() => commitQty(mk)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            <button
+                              className={`${styles.qtyBtn} ${qtyOverrides[mk] != null ? styles.qtyOverridden : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cur = qtyOverrides[mk] ?? item.totalQty;
+                                setQtyDraft(String(cur));
+                                setEditingQty(mk);
+                              }}
+                              aria-label="Edit quantity"
+                            >
+                              {qtyOverrides[mk] != null
+                                ? `${qtyOverrides[mk]}${item.unit ? ` ${item.unit}` : ''}`
+                                : fmtShopAmt(item)}
+                            </button>
+                          )}
+                          {qtyOverrides[mk] != null && editingQty !== mk && (
+                            <span className={styles.qtyDot} aria-label="edited" />
+                          )}
+                        </div>
                         <div className={styles.iChips}>
                           {item.days.map((d, idx) => (
                             <span key={idx} className={styles.mChip}>{d.key}</span>
                           ))}
                           {item.days.length > 1 && <span className={styles.sharedChip}>SHARED</span>}
-                          <span className={item.store === 'sprouts' ? styles.storeS : styles.storeC}>
-                            {item.store === 'sprouts' ? <Leaf size={11} strokeWidth={2.25} /> : <Package size={11} strokeWidth={2.25} />}
-                            {item.store === 'sprouts' ? 'Sprouts' : 'Costco'}
-                          </span>
+                          {item.store && (
+                            <span className={styles.storeChip}>
+                              <ShoppingBag size={11} strokeWidth={2.25} />{item.store}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className={styles.iRight}>

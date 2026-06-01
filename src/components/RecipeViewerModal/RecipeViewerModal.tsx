@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Edit3, Calendar, Users } from 'lucide-react';
+import { X, Edit3, Calendar, Users, Clock } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
@@ -62,6 +62,23 @@ export default function RecipeViewerModal({
               <span key={t} className={styles.tag} style={{ color: c, background: `${c}1a` }}>{t}</span>
             );
           })}
+        </div>
+      )}
+
+      {(recipe.prepTime || recipe.cookTime) && (
+        <div className={styles.timeRow}>
+          {recipe.prepTime != null && (
+            <span className={styles.timeBadge}>
+              <Clock size={13} strokeWidth={2} />
+              {recipe.prepTime} min prep
+            </span>
+          )}
+          {recipe.cookTime != null && (
+            <span className={styles.timeBadge}>
+              <Clock size={13} strokeWidth={2} />
+              {recipe.cookTime} min cook
+            </span>
+          )}
         </div>
       )}
 

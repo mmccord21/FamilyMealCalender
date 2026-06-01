@@ -1,4 +1,4 @@
-import type { DayKey, DayMeal, IngredientCat, Recipe, ShoppingItem } from '@/types';
+import type { DayKey, DayMeal, Ingredient, IngredientCat, Recipe, ShoppingItem } from '@/types';
 
 export const EMOJIS = ['🍳','🥗','🐟','🍗','🍔','🥩','🦐','🥘','🫕','🍝','🌮','🥙','🥑','🍣','🥚','🫔','🧆','🍲','🥣','🥦','🦀','🐙','🫶','🍱','🥞','🧇','🫙','🍜','🫚','🍵'];
 
@@ -6,6 +6,15 @@ export const DAY_KEYS: DayKey[] = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 export const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 export const DAY_COLORS = ['#4A6FA5','#4A7A52','#A0652A','#B54A2A','#8B3A2A','#C47A4A','#6A4A8A'];
 export const REC_COLORS: Record<string, string> = { brunch: '#C47A4A', lunch: '#4A7A52' };
+
+const REC_PALETTE = ['#C47A4A', '#4A7A52', '#4A6FA5', '#B54A2A', '#6A4A8A', '#A0652A'];
+
+export function recColor(key: string): string {
+  if (REC_COLORS[key]) return REC_COLORS[key];
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) & 0xffff;
+  return REC_PALETTE[hash % REC_PALETTE.length];
+}
 
 // Restrained 3-color semantic palette: diet (sage), time (gold), occasion (terra)
 export const TAG_COLORS: Record<string, string> = {
@@ -34,6 +43,14 @@ export const BASE_GUESTS = 3;
 
 // ── Helpers ────────────────────────────────────────────
 
+export function scaleIngredients(ingredients: Ingredient[], baseServings: number, guestCount: number): Ingredient[] {
+  if (baseServings <= 0 || guestCount === baseServings) return ingredients;
+  const factor = guestCount / baseServings;
+  return ingredients.map((ing) =>
+    ing.noScale ? ing : { ...ing, qty: Math.round(ing.qty * factor * 100) / 100 }
+  );
+}
+
 export function catIcon(cat: string): string {
   return CATS[cat]?.i ?? '🛒';
 }
@@ -42,7 +59,7 @@ export function catColor(cat: string): string {
 }
 export function dayColor(key: string): string {
   const i = DAY_KEYS.indexOf(key as DayKey);
-  return i >= 0 ? DAY_COLORS[i] : (REC_COLORS[key] ?? '#888');
+  return i >= 0 ? DAY_COLORS[i] : recColor(key);
 }
 
 export function fmtQ(n: number): string {
@@ -102,7 +119,10 @@ export function buildShoppingList(
       if (!dmr.includeInShopping) return;
       const recipe = recipes.find((r) => r.id === dmr.recipeId);
       if (!recipe) return;
-      addIngs(recipe.ingredients, meal.dayKey, (meal.guests ?? BASE_GUESTS) / BASE_GUESTS);
+      const ings = meal.guests != null
+        ? scaleIngredients(recipe.ingredients, recipe.servings, meal.guests)
+        : recipe.ingredients;
+      addIngs(ings, meal.dayKey, 1);
     });
   });
 

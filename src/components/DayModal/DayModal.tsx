@@ -1,7 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Minus, Trash2, ShoppingCart, X, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Modal from '@/components/Modal/Modal';
 import { useMealStore } from '@/store/useMealStore';
 import type { Recipe, DayMeal } from '@/types';
@@ -18,10 +33,124 @@ interface Props {
   onClose: () => void;
   onOpenPicker: (dayMealId: string) => void;
   onToggleInShopping?: (added: boolean, undo: () => void) => void;
+  onDeleteMeal?: (cancel: () => void) => void;
+}
+
+interface SortableMealRowProps {
+  meal: DayMeal;
+  recipes: Recipe[];
+  draftNames: Record<string, string>;
+  setDraftNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onNameBlur: (meal: DayMeal) => void;
+  onOpenPicker: (dayMealId: string) => void;
+  onToggleInShopping?: (added: boolean, undo: () => void) => void;
+  onDeleteMeal?: (cancel: () => void) => void;
+}
+
+function SortableMealRow({
+  meal, recipes, draftNames, setDraftNames, onNameBlur, onOpenPicker, onToggleInShopping, onDeleteMeal,
+}: SortableMealRowProps) {
+  const store = useMealStore();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: meal.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`${styles.mealSlot} ${isDragging ? styles.dragging : ''}`}
+    >
+      <div className={styles.slotHead}>
+        <button className={styles.dragHandle} {...listeners} {...attributes} aria-label="Drag to reorder">
+          <GripVertical size={16} strokeWidth={2} />
+        </button>
+        <input
+          className={styles.slotNameInput}
+          value={draftNames[meal.id] ?? meal.name}
+          onChange={(e) => setDraftNames((prev) => ({ ...prev, [meal.id]: e.target.value }))}
+          onBlur={() => onNameBlur(meal)}
+          placeholder="Meal name"
+        />
+        <button
+          className={styles.deleteSlotBtn}
+          onClick={async () => {
+            const cancel = await store.deleteDayMeal(meal.id);
+            onDeleteMeal?.(cancel);
+          }}
+          aria-label="Delete meal"
+        >
+          <Trash2 size={15} strokeWidth={2} />
+        </button>
+      </div>
+
+      <div className={styles.slotRecipes}>
+        {meal.recipes.map((dmr) => {
+          const recipe = recipes.find((r) => r.id === dmr.recipeId);
+          if (!recipe) return null;
+          return (
+            <div key={dmr.id} className={styles.recipePill}>
+              <span className={styles.pillEmoji} style={{ background: `${recipe.color}1a` }}>{recipe.emoji}</span>
+              <span className={styles.pillName}>{recipe.name}</span>
+              <button
+                className={`${styles.pillShop} ${dmr.includeInShopping ? styles.shopOn : ''}`}
+                onClick={() => {
+                  const wasIncluded = dmr.includeInShopping;
+                  const mealId = meal.id;
+                  const dmrId = dmr.id;
+                  store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: !wasIncluded });
+                  onToggleInShopping?.(!wasIncluded, () => {
+                    store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: wasIncluded });
+                  });
+                }}
+                aria-label={dmr.includeInShopping ? 'Remove from shopping list' : 'Add to shopping list'}
+                title={dmr.includeInShopping ? 'In grocery list' : 'Not in grocery list'}
+              >
+                <ShoppingCart size={12} strokeWidth={2} />
+              </button>
+              <button
+                className={styles.pillRemove}
+                onClick={() => store.removeRecipeFromDayMeal(meal.id, dmr.id)}
+                aria-label="Remove recipe"
+              >
+                <X size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <button className={styles.addRecipeBtn} onClick={() => onOpenPicker(meal.id)}>
+        <Plus size={14} strokeWidth={2.5} /> Add recipe
+      </button>
+
+      <div className={styles.guestRow}>
+        <div>
+          <div className={styles.grLbl}>Guests</div>
+          <div className={styles.grSub}>Scales ingredient quantities</div>
+        </div>
+        <div className={styles.gsCtl}>
+          <button
+            className={styles.gsBtn}
+            onClick={() => store.updateDayMeal(meal.id, { guests: Math.max(1, (meal.guests ?? BASE_GUESTS) - 1) })}
+            aria-label="Fewer guests"
+          >
+            <Minus size={16} strokeWidth={2.5} />
+          </button>
+          <span className={styles.gsNum}>{meal.guests ?? BASE_GUESTS}</span>
+          <button
+            className={styles.gsBtn}
+            onClick={() => store.updateDayMeal(meal.id, { guests: Math.min(20, (meal.guests ?? BASE_GUESTS) + 1) })}
+            aria-label="More guests"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function DayModal({
-  open, dayKey, dayIdx, weekOffset, dayMeals, recipes, onClose, onOpenPicker, onToggleInShopping,
+  open, dayKey, dayIdx, weekOffset, dayMeals, recipes, onClose, onOpenPicker, onToggleInShopping, onDeleteMeal,
 }: Props) {
   const store = useMealStore();
   const dates = getWeekDates(weekOffset);
@@ -31,6 +160,15 @@ export default function DayModal({
   const [addingMeal, setAddingMeal] = useState(false);
   const [newMealName, setNewMealName] = useState('');
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const sortedMeals = useMemo(
+    () => [...dayMeals].sort((a, b) => a.sortOrder - b.sortOrder),
+    [dayMeals],
+  );
+
   useEffect(() => {
     if (!open) {
       setDraftNames({});
@@ -38,10 +176,6 @@ export default function DayModal({
       setNewMealName('');
     }
   }, [open]);
-
-  function getDraftName(meal: DayMeal) {
-    return draftNames[meal.id] ?? meal.name;
-  }
 
   function handleNameBlur(meal: DayMeal) {
     const name = (draftNames[meal.id] ?? meal.name).trim() || meal.name;
@@ -56,6 +190,21 @@ export default function DayModal({
     setAddingMeal(false);
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedMeals.findIndex((m) => m.id === active.id);
+    const newIndex = sortedMeals.findIndex((m) => m.id === over.id);
+    const reordered = arrayMove(sortedMeals, oldIndex, newIndex);
+
+    reordered.forEach((meal, idx) => {
+      if (meal.sortOrder !== idx) {
+        store.updateDayMeal(meal.id, { sortOrder: idx });
+      }
+    });
+  }
+
   return (
     <Modal open={open} onBackdropClick={onClose}>
       <div className={styles.title}>{DAY_FULL[dayIdx] ?? dayKey}</div>
@@ -64,96 +213,29 @@ export default function DayModal({
       </div>
 
       <div className={styles.mealList}>
-        {dayMeals.length === 0 && !addingMeal && (
+        {sortedMeals.length === 0 && !addingMeal && (
           <div className={styles.emptyDay}>
             No meals planned yet. Add one below.
           </div>
         )}
 
-        {dayMeals.map((meal) => (
-          <div key={meal.id} className={styles.mealSlot}>
-            <div className={styles.slotHead}>
-              <input
-                className={styles.slotNameInput}
-                value={getDraftName(meal)}
-                onChange={(e) => setDraftNames((prev) => ({ ...prev, [meal.id]: e.target.value }))}
-                onBlur={() => handleNameBlur(meal)}
-                placeholder="Meal name"
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortedMeals.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+            {sortedMeals.map((meal) => (
+              <SortableMealRow
+                key={meal.id}
+                meal={meal}
+                recipes={recipes}
+                draftNames={draftNames}
+                setDraftNames={setDraftNames}
+                onNameBlur={handleNameBlur}
+                onOpenPicker={onOpenPicker}
+                onToggleInShopping={onToggleInShopping}
+                onDeleteMeal={onDeleteMeal}
               />
-              <button
-                className={styles.deleteSlotBtn}
-                onClick={() => store.deleteDayMeal(meal.id)}
-                aria-label="Delete meal"
-              >
-                <Trash2 size={15} strokeWidth={2} />
-              </button>
-            </div>
-
-            <div className={styles.slotRecipes}>
-              {meal.recipes.map((dmr) => {
-                const recipe = recipes.find((r) => r.id === dmr.recipeId);
-                if (!recipe) return null;
-                return (
-                  <div key={dmr.id} className={styles.recipePill}>
-                    <span className={styles.pillEmoji} style={{ background: `${recipe.color}1a` }}>{recipe.emoji}</span>
-                    <span className={styles.pillName}>{recipe.name}</span>
-                    <button
-                      className={`${styles.pillShop} ${dmr.includeInShopping ? styles.shopOn : ''}`}
-                      onClick={() => {
-                        const wasIncluded = dmr.includeInShopping;
-                        const mealId = meal.id;
-                        const dmrId = dmr.id;
-                        store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: !wasIncluded });
-                        onToggleInShopping?.(!wasIncluded, () => {
-                          store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: wasIncluded });
-                        });
-                      }}
-                      aria-label={dmr.includeInShopping ? 'Remove from shopping list' : 'Add to shopping list'}
-                      title={dmr.includeInShopping ? 'In grocery list' : 'Not in grocery list'}
-                    >
-                      <ShoppingCart size={12} strokeWidth={2} />
-                    </button>
-                    <button
-                      className={styles.pillRemove}
-                      onClick={() => store.removeRecipeFromDayMeal(meal.id, dmr.id)}
-                      aria-label="Remove recipe"
-                    >
-                      <X size={14} strokeWidth={2.5} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button className={styles.addRecipeBtn} onClick={() => onOpenPicker(meal.id)}>
-              <Plus size={14} strokeWidth={2.5} /> Add recipe
-            </button>
-
-            <div className={styles.guestRow}>
-              <div>
-                <div className={styles.grLbl}>Guests</div>
-                <div className={styles.grSub}>Scales ingredient quantities</div>
-              </div>
-              <div className={styles.gsCtl}>
-                <button
-                  className={styles.gsBtn}
-                  onClick={() => store.updateDayMeal(meal.id, { guests: Math.max(1, (meal.guests ?? BASE_GUESTS) - 1) })}
-                  aria-label="Fewer guests"
-                >
-                  <Minus size={16} strokeWidth={2.5} />
-                </button>
-                <span className={styles.gsNum}>{meal.guests ?? BASE_GUESTS}</span>
-                <button
-                  className={styles.gsBtn}
-                  onClick={() => store.updateDayMeal(meal.id, { guests: Math.min(20, (meal.guests ?? BASE_GUESTS) + 1) })}
-                  aria-label="More guests"
-                >
-                  <Plus size={16} strokeWidth={2.5} />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
 
       {addingMeal ? (

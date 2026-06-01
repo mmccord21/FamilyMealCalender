@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
   const body = await request.json();
-  const { emoji, name, sub, tags, color, instructions, ingredients } = body;
+  const { emoji, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
 
   if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
@@ -31,6 +31,9 @@ export async function POST(request: Request) {
         tags: tags || [],
         color: color || '#888888',
         instructions: instructions || null,
+        servings: servings ?? 4,
+        prepTime: prepTime ?? null,
+        cookTime: cookTime ?? null,
       },
     });
 

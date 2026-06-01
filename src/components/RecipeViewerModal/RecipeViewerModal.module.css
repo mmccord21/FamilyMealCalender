@@ -63,6 +63,9 @@
   letter-spacing: 0.2px;
 }
 
+.timeRow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.timeBadge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mu); background: #f5efe8; border-radius: var(--r-pill); padding: 5px 11px; }
+
 .guestBadge {
   display: inline-flex;
   align-items: center;

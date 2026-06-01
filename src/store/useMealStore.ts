@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Recipe, DayMeal, DayMealRecipe, RecurringMeal, ManualShoppingItem } from '@/types';
+import type { Recipe, DayMeal, DayMealRecipe, RecurringMeal, ManualShoppingItem, UserStore, WeekTemplate } from '@/types';
 import { getISOWeek, buildShoppingList } from '@/lib/helpers';
 
 interface MealState {
@@ -8,7 +8,10 @@ interface MealState {
   recurring: RecurringMeal[];
   prices: Record<string, number>;
   checkedItems: Record<string, boolean>;
+  qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
+  stores: UserStore[];
+  templates: WeekTemplate[];
 
   weekOffset: number;
   weekLoading: boolean;
@@ -17,23 +20,35 @@ interface MealState {
   setInitialData: (data: Partial<MealState>) => void;
   setActiveTab: (tab: 'plan' | 'recipes' | 'shop') => void;
   setWeekOffset: (delta: number) => void;
+  fetchStores: () => Promise<void>;
+  addStore: (name: string) => Promise<void>;
+  deleteStore: (id: string) => Promise<void>;
+  fetchTemplates: () => Promise<void>;
+  saveTemplate: (name: string) => Promise<void>;
+  applyTemplate: (templateId: string) => Promise<void>;
+  deleteTemplate: (id: string) => Promise<void>;
 
   fetchWeek: () => Promise<void>;
+  setQtyOverride: (itemKey: string, qty: number) => Promise<void>;
   addDayMeal: (dayKey: string, name: string) => Promise<DayMeal>;
   updateDayMeal: (id: string, fields: Partial<Pick<DayMeal, 'name' | 'guests' | 'note' | 'sortOrder'>>) => Promise<void>;
-  deleteDayMeal: (id: string) => Promise<void>;
+  deleteDayMeal: (id: string) => Promise<() => void>;
   addRecipeToDayMeal: (dayMealId: string, recipeId: string) => Promise<DayMealRecipe>;
   removeRecipeFromDayMeal: (dayMealId: string, dmrId: string) => Promise<void>;
   updateDayMealRecipe: (dayMealId: string, dmrId: string, fields: { sortOrder?: number; includeInShopping?: boolean }) => Promise<void>;
 
   saveRecurring: (key: string, recipeId: string | null) => Promise<void>;
+  addRecurring: (label: string) => Promise<void>;
+  deleteRecurring: (key: string) => Promise<void>;
+  renameRecurring: (key: string, label: string) => Promise<void>;
   saveRecipe: (recipe: Partial<Recipe>) => Promise<void>;
-  deleteRecipe: (id: string) => Promise<void>;
+  deleteRecipe: (id: string) => Promise<() => void>;
   savePrice: (itemKey: string, price: number) => Promise<void>;
   toggleCheck: (itemKey: string, checked: boolean) => Promise<void>;
   resetChecked: () => Promise<void>;
   addManualItem: (name: string) => Promise<void>;
   deleteManualItem: (id: string) => Promise<void>;
+  copyWeek: (fromWeekYear: number, fromWeekNum: number) => Promise<void>;
 }
 
 function weekFromOffset(offset: number) {
@@ -73,7 +88,10 @@ export const useMealStore = create<MealState>((set, get) => ({
   recurring: [],
   prices: {},
   checkedItems: {},
+  qtyOverrides: {},
   manualItems: [],
+  stores: [],
+  templates: [],
 
   weekOffset: 0,
   weekLoading: false,
@@ -110,7 +128,13 @@ export const useMealStore = create<MealState>((set, get) => ({
         if (manualRes.ok) manualItems = await manualRes.json();
       } catch { /* non-critical */ }
 
-      set({ dayMeals: data.meals, checkedItems: checked, manualItems, weekLoading: false });
+      let qtyOverrides: Record<string, number> = {};
+      try {
+        const overrideRes = await fetch(`/api/qty-overrides?weekYear=${data.weekYear}&weekNum=${data.weekNum}`);
+        if (overrideRes.ok) qtyOverrides = await overrideRes.json();
+      } catch { /* non-critical */ }
+
+      set({ dayMeals: data.meals, checkedItems: checked, manualItems, qtyOverrides, weekLoading: false });
     } catch {
       set({ dayMeals: [], checkedItems: {}, weekLoading: false });
     }
@@ -159,6 +183,8 @@ export const useMealStore = create<MealState>((set, get) => ({
   deleteDayMeal: async (id) => {
     const { dayMeals, recipes, recurring, checkedItems, weekOffset } = get();
     const { weekYear, weekNum } = weekFromOffset(weekOffset);
+
+    const deletedMeal = dayMeals.find((m) => m.id === id);
     const newDayMeals = dayMeals.filter((m) => m.id !== id);
 
     const stale = staleCheckedKeys(dayMeals, newDayMeals, recipes, recurring, checkedItems);
@@ -167,7 +193,17 @@ export const useMealStore = create<MealState>((set, get) => ({
 
     set({ dayMeals: newDayMeals, checkedItems: newChecked });
     clearCheckedInDB(stale, weekYear, weekNum);
-    await fetch(`/api/meals/${id}`, { method: 'DELETE' });
+
+    const timer = setTimeout(() => {
+      fetch(`/api/meals/${id}`, { method: 'DELETE' });
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      set((state) => ({
+        dayMeals: deletedMeal ? [...state.dayMeals, deletedMeal] : state.dayMeals,
+      }));
+    };
   },
 
   addRecipeToDayMeal: async (dayMealId, recipeId) => {
@@ -252,11 +288,97 @@ export const useMealStore = create<MealState>((set, get) => ({
     });
   },
 
+  fetchStores: async () => {
+    const res = await fetch('/api/stores');
+    if (!res.ok) return;
+    const stores: UserStore[] = await res.json();
+    set({ stores });
+  },
+
+  addStore: async (name) => {
+    const tempId = `temp-${Date.now()}`;
+    set((state) => ({ stores: [...state.stores, { id: tempId, name }] }));
+    const res = await fetch('/api/stores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    const saved: UserStore = await res.json();
+    set((state) => ({ stores: state.stores.map((s) => s.id === tempId ? saved : s) }));
+  },
+
+  deleteStore: async (id) => {
+    set((state) => ({ stores: state.stores.filter((s) => s.id !== id) }));
+    await fetch(`/api/stores?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
+  fetchTemplates: async () => {
+    const res = await fetch('/api/templates');
+    if (!res.ok) return;
+    const templates: WeekTemplate[] = await res.json();
+    set({ templates });
+  },
+
+  saveTemplate: async (name) => {
+    const { weekOffset } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+    await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, weekYear, weekNum }),
+    });
+    await get().fetchTemplates();
+  },
+
+  applyTemplate: async (templateId) => {
+    const { weekOffset } = get();
+    const { weekYear: toWeekYear, weekNum: toWeekNum } = weekFromOffset(weekOffset);
+    await fetch(`/api/templates/${templateId}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toWeekYear, toWeekNum }),
+    });
+    await get().fetchWeek();
+  },
+
+  deleteTemplate: async (id) => {
+    set((state) => ({ templates: state.templates.filter((t) => t.id !== id) }));
+    await fetch(`/api/templates/${id}`, { method: 'DELETE' });
+  },
+
   saveRecurring: async (key, recipeId) => {
     set((state) => ({ recurring: state.recurring.map((r) => r.key === key ? { ...r, recipeId } : r) }));
     await fetch('/api/recurring', {
       method: 'PUT',
       body: JSON.stringify({ key, recipeId }),
+    });
+  },
+
+  addRecurring: async (label) => {
+    const tempId = `temp-${Date.now()}`;
+    const tempKey = `${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    const optimistic: RecurringMeal = { id: tempId, key: tempKey, label, recipeId: null };
+    set((state) => ({ recurring: [...state.recurring, optimistic] }));
+    const res = await fetch('/api/recurring', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label }),
+    });
+    const saved: RecurringMeal = await res.json();
+    set((state) => ({ recurring: state.recurring.map((r) => r.id === tempId ? saved : r) }));
+  },
+
+  deleteRecurring: async (key) => {
+    set((state) => ({ recurring: state.recurring.filter((r) => r.key !== key) }));
+    await fetch(`/api/recurring?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+  },
+
+  renameRecurring: async (key, label) => {
+    set((state) => ({ recurring: state.recurring.map((r) => r.key === key ? { ...r, label } : r) }));
+    await fetch('/api/recurring', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, label }),
     });
   },
 
@@ -279,6 +401,12 @@ export const useMealStore = create<MealState>((set, get) => ({
     const { recipes, dayMeals, recurring, checkedItems, weekOffset } = get();
     const { weekYear, weekNum } = weekFromOffset(weekOffset);
 
+    const deletedRecipe = recipes.find((r) => r.id === id);
+    const affectedMealRecipes = dayMeals
+      .map((m) => ({ id: m.id, dmrs: m.recipes.filter((r) => r.recipeId === id) }))
+      .filter((a) => a.dmrs.length > 0);
+    const affectedRecurring = recurring.filter((r) => r.recipeId === id);
+
     const newRecipes = recipes.filter((r) => r.id !== id);
     const newDayMeals = dayMeals.map((m) => ({
       ...m,
@@ -298,7 +426,26 @@ export const useMealStore = create<MealState>((set, get) => ({
 
     set({ recipes: newRecipes, dayMeals: newDayMeals, recurring: newRecurring, checkedItems: newChecked });
     clearCheckedInDB(stale, weekYear, weekNum);
-    await fetch(`/api/recipes/${id}`, { method: 'DELETE' });
+
+    const timer = setTimeout(() => {
+      fetch(`/api/recipes/${id}`, { method: 'DELETE' });
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      set((state) => ({
+        recipes: deletedRecipe ? [...state.recipes, deletedRecipe] : state.recipes,
+        dayMeals: state.dayMeals.map((m) => {
+          const affected = affectedMealRecipes.find((a) => a.id === m.id);
+          if (!affected) return m;
+          return { ...m, recipes: [...m.recipes, ...affected.dmrs] };
+        }),
+        recurring: state.recurring.map((r) => {
+          const orig = affectedRecurring.find((ar) => ar.key === r.key);
+          return orig ? { ...r, recipeId: id } : r;
+        }),
+      }));
+    };
   },
 
   savePrice: async (itemKey, price) => {
@@ -314,8 +461,21 @@ export const useMealStore = create<MealState>((set, get) => ({
 
   resetChecked: async () => {
     const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
-    set({ checkedItems: {} });
-    await fetch(`/api/checked?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' });
+    set({ checkedItems: {}, qtyOverrides: {} });
+    await Promise.all([
+      fetch(`/api/checked?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' }),
+      fetch(`/api/qty-overrides?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' }),
+    ]);
+  },
+
+  setQtyOverride: async (itemKey, qty) => {
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
+    set((state) => ({ qtyOverrides: { ...state.qtyOverrides, [itemKey]: qty } }));
+    await fetch('/api/qty-overrides', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemKey, qty, weekYear, weekNum }),
+    });
   },
 
   addManualItem: async (name) => {
@@ -335,5 +495,16 @@ export const useMealStore = create<MealState>((set, get) => ({
   deleteManualItem: async (id) => {
     set((state) => ({ manualItems: state.manualItems.filter((i) => i.id !== id) }));
     await fetch(`/api/manual-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
+  copyWeek: async (fromWeekYear, fromWeekNum) => {
+    const { weekOffset } = get();
+    const { weekYear: toWeekYear, weekNum: toWeekNum } = weekFromOffset(weekOffset);
+    await fetch('/api/week/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromWeekYear, fromWeekNum, toWeekYear, toWeekNum }),
+    });
+    await get().fetchWeek();
   },
 }));

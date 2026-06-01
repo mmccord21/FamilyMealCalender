@@ -9,6 +9,14 @@ const APP_TAGS = ['keto', 'meal-prep', '30 min', 'crowd-pleaser', 'fun night', '
 // JSON-LD recipeInstructions can be a string, an array of strings, an array of
 // HowToStep objects, or HowToSection objects nesting HowToSteps. Flatten any
 // of these into a clean newline-separated list of steps.
+function parsePT(val: unknown): number | null {
+  if (typeof val !== 'string') return null;
+  const m = val.match(/PT(?:(\d+)H)?(?:(\d+)M)?/i);
+  if (!m) return null;
+  const total = (m[1] ? parseInt(m[1]) * 60 : 0) + (m[2] ? parseInt(m[2]) : 0);
+  return total > 0 ? total : null;
+}
+
 function flattenInstructions(raw: unknown): string {
   const steps: string[] = [];
   const visit = (node: unknown) => {
@@ -76,12 +84,17 @@ export async function POST(request: Request) {
   const rawKeywords = typeof schema.keywords === 'string' ? schema.keywords : '';
   const rawName = typeof schema.name === 'string' ? schema.name : '';
   const instructions = flattenInstructions(schema.recipeInstructions);
+  const schemaPrepTime = parsePT(schema.prepTime);
+  const schemaCookTime = parsePT(schema.cookTime);
 
   // Instructions come straight from the JSON-LD schema (no AI needed). Claude
   // Haiku only does the lightweight structured work: parse free-text ingredient
   // strings into objects and map the site's keywords onto our tag vocabulary.
   let ingredients: Record<string, unknown>[] = [];
   let tags: string[] = [];
+  let aiServings: number | null = null;
+  let aiPrepTime: number | null = null;
+  let aiCookTime: number | null = null;
   if (rawIngredients.length > 0) {
     try {
       const msg = await anthropic.messages.create({
@@ -113,6 +126,9 @@ export async function POST(request: Request) {
                   items: { type: 'string', enum: APP_TAGS },
                   description: 'choose 0-3 that fit this recipe',
                 },
+                servings: { type: 'integer', description: 'number of servings the recipe makes, omit if unknown' },
+                prepTime: { type: 'integer', description: 'prep time in minutes, omit if unknown' },
+                cookTime: { type: 'integer', description: 'cook time in minutes, omit if unknown' },
               },
               required: ['ingredients', 'tags'],
             },
@@ -133,6 +149,9 @@ ${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
       const parsed = JSON.parse(text);
       if (Array.isArray(parsed.ingredients)) ingredients = parsed.ingredients;
       if (Array.isArray(parsed.tags)) tags = parsed.tags.filter((t: string) => APP_TAGS.includes(t));
+      if (typeof parsed.servings === 'number') aiServings = parsed.servings;
+      if (typeof parsed.prepTime === 'number') aiPrepTime = parsed.prepTime;
+      if (typeof parsed.cookTime === 'number') aiCookTime = parsed.cookTime;
     } catch { /* fall back to empty */ }
   }
 
@@ -141,6 +160,9 @@ ${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
     sub: rawDescription.replace(/<[^>]+>/g, '').slice(0, 120),
     tags,
     instructions,
+    servings: aiServings ?? 4,
+    prepTime: schemaPrepTime ?? aiPrepTime,
+    cookTime: schemaCookTime ?? aiCookTime,
     ingredients: ingredients.map((ing) => ({
       id: Math.random().toString(36).substring(7),
       recipeId: '',

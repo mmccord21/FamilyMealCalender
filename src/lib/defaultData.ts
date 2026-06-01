@@ -4,7 +4,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🍳', name: 'Smoked Salmon Frittata',
     sub: 'capers, cream cheese & fresh dill',
-    tags: ['keto', 'crowd-pleaser'], color: '#C47A4A',
+    tags: ['keto', 'crowd-pleaser'], color: '#C47A4A', servings: 4,
     ingredients: [
       { id: 'a1', recipeId: 'dr1', name: 'Eggs, large', qty: 8, unit: '', cat: 'dairy', store: 'costco', noScale: false },
       { id: 'a2', recipeId: 'dr1', name: 'Smoked salmon', qty: 4, unit: 'oz', cat: 'proteins', store: 'sprouts', noScale: false },
@@ -18,7 +18,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🥗', name: 'Greek Chicken Bowls',
     sub: 'romaine, feta, olives & tzatziki',
-    tags: ['keto', 'meal-prep'], color: '#4A7A52',
+    tags: ['keto', 'meal-prep'], color: '#4A7A52', servings: 4,
     ingredients: [
       { id: 'b1', recipeId: 'dr2', name: 'Chicken thighs, bone-in', qty: 2, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'b2', recipeId: 'dr2', name: 'Romaine lettuce', qty: 1, unit: 'head', cat: 'produce', store: 'sprouts', noScale: false },
@@ -35,7 +35,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🐟', name: 'Sheet Pan Salmon',
     sub: 'asparagus & lemon herb butter',
-    tags: ['keto', '30 min'], color: '#4A6FA5',
+    tags: ['keto', '30 min'], color: '#4A6FA5', servings: 4,
     ingredients: [
       { id: 'c1', recipeId: 'dr3', name: 'Salmon fillets', qty: 1.5, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'c2', recipeId: 'dr3', name: 'Asparagus', qty: 1, unit: 'bunch', cat: 'produce', store: 'sprouts', noScale: false },
@@ -48,7 +48,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🍗', name: 'Tuscan Butter Chicken',
     sub: 'sun-dried tomatoes, spinach & cream',
-    tags: ['keto'], color: '#A0652A',
+    tags: ['keto'], color: '#A0652A', servings: 4,
     ingredients: [
       { id: 'd1', recipeId: 'dr4', name: 'Chicken thighs, bone-in', qty: 2, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'd2', recipeId: 'dr4', name: 'Baby spinach', qty: 3, unit: 'oz', cat: 'produce', store: 'sprouts', noScale: false },
@@ -62,7 +62,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🍔', name: 'Lettuce Wrap Smash Burgers',
     sub: 'special sauce, avocado & sharp cheddar',
-    tags: ['keto', 'fun night'], color: '#B54A2A',
+    tags: ['keto', 'fun night'], color: '#B54A2A', servings: 4,
     ingredients: [
       { id: 'e1', recipeId: 'dr5', name: 'Ground beef, 80/20', qty: 1.5, unit: 'lbs', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'e2', recipeId: 'dr5', name: 'Sharp cheddar', qty: 4, unit: 'oz', cat: 'dairy', store: 'sprouts', noScale: false },
@@ -74,7 +74,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🥩', name: 'Ribeye & Chimichurri',
     sub: 'roasted zucchini & garlic herb butter',
-    tags: ['keto', 'date night'], color: '#8B3A2A',
+    tags: ['keto', 'date night'], color: '#8B3A2A', servings: 4,
     ingredients: [
       { id: 'f1', recipeId: 'dr6', name: 'Ribeye steaks', qty: 2, unit: '', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'f2', recipeId: 'dr6', name: 'Zucchini', qty: 2, unit: '', cat: 'produce', store: 'sprouts', noScale: false },
@@ -88,7 +88,7 @@ const DEF_RECIPES: Omit<Recipe, 'id'>[] = [
   {
     emoji: '🦐', name: 'Coconut Curry Shrimp',
     sub: 'cauliflower rice & fresh herbs',
-    tags: ['keto'], color: '#6A4A8A',
+    tags: ['keto'], color: '#6A4A8A', servings: 4,
     ingredients: [
       { id: 'g1', recipeId: 'dr7', name: 'Large shrimp, peeled', qty: 1, unit: 'lb', cat: 'proteins', store: 'costco', noScale: false },
       { id: 'g2', recipeId: 'dr7', name: 'Cauliflower', qty: 1, unit: 'head', cat: 'produce', store: 'sprouts', noScale: false },

@@ -88,13 +88,13 @@ src/
 Recipe       { id, userId, emoji, name, sub, tags: string[], color, instructions?, ingredients: Ingredient[] }
 Ingredient   { id, recipeId, name, qty, unit, cat: IngredientCat, store: Store, noScale: boolean }
 WeekEntry    { id, dayKey, weekYear, weekNum, type: 'empty'|'meal'|'note', recipeId?, guests?, note? }
-RecurringMeal{ id, key: 'brunch'|'lunch', label, recipeId? }
+RecurringMeal{ id, key (user-defined slug), label, recipeId? }
 IngredientPrice { name (lowercase key), price }
 ShoppingCheck{ itemKey, checked, weekYear, weekNum }
 ```
 
 Ingredient categories: `proteins | produce | dairy | pantry`
-Stores: `sprouts | costco`
+Stores: user-defined strings; seeded as `Sprouts`, `Costco` on first use — managed via `/api/stores` and the ShopView ⚙ panel
 Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 
 ---
@@ -183,8 +183,7 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 - `buildShoppingList` in `helpers.ts` is pure — it derives the shopping list from `weekEntries + recurring` every render. Do not add side effects there.
 - Prices are stored by **lowercase ingredient name** as the key.
 - `weekOffset` 0 = this week, -1 = last week, +1 = next week. Week navigation re-fetches from API.
-- Clerk auth wraps the entire app but the `page.tsx` SSR currently fetches **all recipes** without userId filtering (the API routes do filter). This is a known gap.
-- Recurring meals are currently hardcoded to `brunch` and `lunch` slots.
+- Recurring meal slots are user-defined (add/rename/delete from WeekView). The old hardcoded brunch/lunch seed is removed; existing DB rows with those keys still work.
 
 ---
 
@@ -196,3 +195,6 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 | 2026-05-30 | Design refresh Ph1+2: WeekView → vertical day cards + overview dots; lucide-react icons replace emoji chrome; compact header; spacing/radius/elevation/motion tokens; 3-color semantic tags (soft tints); week skeleton loaders; polished empty states |
 | 2026-05-30 | Recipe instructions added end-to-end (`instructions String?` on Recipe; editor textarea; threaded through POST/PUT). AI import overhaul: URL import now reads JSON-LD `recipeInstructions` for free + switched ingredient/tag parsing to Haiku w/ structured output; photo import gains instructions + structured output (still Sonnet vision); new paste-raw-text import (`/api/import-text`, Haiku) for sites without JSON-LD |
 | 2026-05-30 | Design refresh Ph3 (modals): base Modal uses tokens + desktop centered/pop-in (mobile sheet); DayModal cooking/not-cooking toggle + guest stepper + choose-recipe now Lucide icons, chosen-recipe emoji tinted, press states; RecipePicker has Search-icon input + SearchX empty state + tinted recipe avatars; PriceModal token buttons; Toast → floating pill w/ shadow-lg + scale-in |
+| 2026-06-01 | Security audit: all routes already scoped by userId. Fixed IDOR in `POST /api/meals/[id]/recipes` (now verifies recipeId belongs to caller before attaching). Removed dead `if (!recipe)` in `GET /api/recipes/[id]`. Removed stale "known gap" note about page.tsx (it already filtered by userId). |
+| 2026-06-01 | Recurring meals: user can add/rename/delete slots. Removed hardcoded brunch/lunch seed. Added POST/DELETE/PATCH to `/api/recurring`; new `addRecurring`/`deleteRecurring`/`renameRecurring` store actions; WeekView inline edit/delete/add UI; `recColor()` helper replaces hardcoded map. |
+| 2026-06-01 | User-configurable stores: `Store = string` (was literal union). New `UserStore` model in Prisma + `GET/POST/DELETE /api/stores` (seeds Sprouts + Costco on first use). `stores: UserStore[]` in Zustand state with `fetchStores`/`addStore`/`deleteStore`. SSR passes `initialStores` from page.tsx. RecipeEditorModal renders dynamic store pills (generic Store icon). ShopView renders dynamic filter row + inline "Manage stores" panel (⚙ icon toggles add/delete UI). `Ingredient.store` remains `String` in DB — no migration needed. |

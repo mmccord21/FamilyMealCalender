@@ -1,32 +1,37 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Link2, Camera, FileText, Leaf, Package, Plus, ChevronUp, X, Check } from 'lucide-react';
+import { Link2, Camera, FileText, Store as StoreIcon, Minus, Plus, ChevronUp, X, Check, Copy } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
-import type { Recipe, Ingredient, IngredientCat, Store } from '@/types';
+import type { Recipe, Ingredient, IngredientCat, UserStore } from '@/types';
 import { EMOJIS, CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
 import styles from './RecipeEditorModal.module.css';
 
 interface Props {
   open: boolean;
   recipe: Recipe | null;
+  stores: UserStore[];
   onClose: () => void;
   onSave: (recipe: Partial<Recipe>) => void | Promise<void>;
   onDelete: (id: string) => void;
+  onDuplicate: (recipe: Partial<Recipe>) => void | Promise<void>;
 }
 
-export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDelete }: Props) {
+export default function RecipeEditorModal({ open, recipe, stores = [], onClose, onSave, onDelete, onDuplicate }: Props) {
   const [emoji, setEmoji] = useState('🍳');
   const [name, setName] = useState('');
   const [sub, setSub] = useState('');
   const [tags, setTags] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [servings, setServings] = useState(4);
+  const [prepTime, setPrepTime] = useState<string>('');
+  const [cookTime, setCookTime] = useState<string>('');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   const [showIngForm, setShowIngForm] = useState(false);
   const [draftIng, setDraftIng] = useState<{
-    name: string; qty: string; unit: string; cat: IngredientCat; store: Store; noScale: boolean;
-  }>({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
+    name: string; qty: string; unit: string; cat: IngredientCat; store: string; noScale: boolean;
+  }>({ name: '', qty: '', unit: '', cat: 'produce', store: '', noScale: false });
 
   const [importMode, setImportMode] = useState<'url' | 'text' | null>(null);
   const [importUrl, setImportUrl] = useState('');
@@ -43,9 +48,12 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       setSub(recipe?.sub ?? '');
       setTags(recipe?.tags?.join(', ') ?? 'keto');
       setInstructions(recipe?.instructions ?? '');
+      setServings(recipe?.servings ?? 4);
+      setPrepTime(recipe?.prepTime ? String(recipe.prepTime) : '');
+      setCookTime(recipe?.cookTime ? String(recipe.cookTime) : '');
       setIngredients(recipe?.ingredients ?? []);
       setShowIngForm(false);
-      setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
+      setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: stores[0]?.name ?? '', noScale: false });
       setImportMode(null);
       setImportUrl('');
       setImportText('');
@@ -53,11 +61,14 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
     }
   }, [open, recipe]);
 
-  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; ingredients: Ingredient[] }) => {
+  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; servings?: number; prepTime?: number | null; cookTime?: number | null; ingredients: Ingredient[] }) => {
     setName(data.name);
     setSub(data.sub);
     setTags(data.tags.join(', '));
     setInstructions(data.instructions ?? '');
+    if (data.servings) setServings(data.servings);
+    setPrepTime(data.prepTime ? String(data.prepTime) : '');
+    setCookTime(data.cookTime ? String(data.cookTime) : '');
     setIngredients(data.ingredients);
     setImportMode(null);
     setImportUrl('');
@@ -143,6 +154,9 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
       sub,
       tags: tagsArr,
       instructions: instructions.trim() || null,
+      servings,
+      prepTime: prepTime ? parseInt(prepTime, 10) : null,
+      cookTime: cookTime ? parseInt(cookTime, 10) : null,
       ingredients,
     });
   };
@@ -162,7 +176,7 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
         noScale: draftIng.noScale,
       },
     ]);
-    setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: 'sprouts', noScale: false });
+    setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: stores[0]?.name ?? '', noScale: false });
   };
 
   const removeIngredient = (id: string) => {
@@ -247,6 +261,20 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
 
       <input className={styles.mIn} placeholder="Recipe name…" value={name} onChange={(e) => setName(e.target.value)} />
       <input className={styles.mInSm} placeholder="Short description…" value={sub} onChange={(e) => setSub(e.target.value)} />
+
+      <div className={styles.servingsRow}>
+        <span className={styles.servingsLbl}>Serves</span>
+        <div className={styles.servingsStepper}>
+          <button className={styles.servingsBtn} onClick={() => setServings(Math.max(1, servings - 1))} aria-label="Fewer servings">
+            <Minus size={14} strokeWidth={2} />
+          </button>
+          <span className={styles.servingsNum}>{servings}</span>
+          <button className={styles.servingsBtn} onClick={() => setServings(servings + 1)} aria-label="More servings">
+            <Plus size={14} strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+
       <input className={styles.mInSm} placeholder="Tags — keto, 30 min, date night…" value={tags} onChange={(e) => setTags(e.target.value)} />
 
       <div className={styles.lbl}>Instructions</div>
@@ -256,6 +284,33 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
       />
+
+      <div className={styles.timeRow}>
+        <div className={styles.timeField}>
+          <span className={styles.timeLbl}>Prep</span>
+          <input
+            className={styles.timeInput}
+            type="number"
+            min="0"
+            placeholder="0"
+            value={prepTime}
+            onChange={(e) => setPrepTime(e.target.value)}
+          />
+          <span className={styles.timeSuffix}>min</span>
+        </div>
+        <div className={styles.timeField}>
+          <span className={styles.timeLbl}>Cook</span>
+          <input
+            className={styles.timeInput}
+            type="number"
+            min="0"
+            placeholder="0"
+            value={cookTime}
+            onChange={(e) => setCookTime(e.target.value)}
+          />
+          <span className={styles.timeSuffix}>min</span>
+        </div>
+      </div>
 
       <div className={styles.lbl}>Ingredients</div>
       <div className={styles.ingList}>
@@ -268,7 +323,7 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
               <div className={styles.ingInfo}>
                 <div className={styles.ingName}>{ing.name}</div>
                 <div className={styles.ingQty}>
-                  {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''} · {ing.store === 'costco' ? 'Costco' : 'Sprouts'}
+                  {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''}{ing.store ? ` · ${ing.store}` : ''}
                 </div>
               </div>
               <button className={styles.ingDel} onClick={() => removeIngredient(ing.id)} aria-label="Remove ingredient"><X size={16} strokeWidth={2.5} /></button>
@@ -313,17 +368,20 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
             ))}
           </div>
 
-          <div className={styles.lbl}>Store</div>
-          <div className={styles.storePills}>
-            <button
-              className={`${styles.storePill} ${draftIng.store === 'sprouts' ? styles.storePillOn : ''}`}
-              onClick={() => setDraftIng({ ...draftIng, store: 'sprouts' })}
-            ><Leaf size={13} strokeWidth={2} /> Sprouts</button>
-            <button
-              className={`${styles.storePill} ${draftIng.store === 'costco' ? styles.storePillOn : ''}`}
-              onClick={() => setDraftIng({ ...draftIng, store: 'costco' })}
-            ><Package size={13} strokeWidth={2} /> Costco</button>
-          </div>
+          {stores.length > 0 && (
+            <>
+              <div className={styles.lbl}>Store</div>
+              <div className={styles.storePills}>
+                {stores.map((s) => (
+                  <button
+                    key={s.id}
+                    className={`${styles.storePill} ${draftIng.store === s.name ? styles.storePillOn : ''}`}
+                    onClick={() => setDraftIng({ ...draftIng, store: s.name })}
+                  ><StoreIcon size={13} strokeWidth={2} /> {s.name}</button>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className={styles.fixedToggle} onClick={() => setDraftIng({ ...draftIng, noScale: !draftIng.noScale })}>
             <div className={`${styles.toggleBox} ${draftIng.noScale ? styles.toggleBoxOn : ''}`}>
@@ -338,6 +396,17 @@ export default function RecipeEditorModal({ open, recipe, onClose, onSave, onDel
 
       <div className={styles.actions}>
         <button className={styles.mSec} onClick={onClose}>Cancel</button>
+        {recipe && (
+          <button
+            className={styles.mSec}
+            onClick={() => {
+              const tagsArr = tags.split(',').map((t) => t.trim()).filter(Boolean);
+              onDuplicate({ emoji, name: `Copy of ${name}`, sub, tags: tagsArr, instructions: instructions.trim() || null, ingredients });
+            }}
+          >
+            <Copy size={15} strokeWidth={2} /> Duplicate
+          </button>
+        )}
         <button className={styles.mPri} onClick={handleSave}>Save Recipe</button>
       </div>
       {recipe && (

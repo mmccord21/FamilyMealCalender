@@ -9,6 +9,20 @@ export async function GET() {
   return NextResponse.json(recurring);
 }
 
+export async function POST(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return new NextResponse('Unauthorized', { status: 401 });
+  const body = await request.json();
+  const { label } = body;
+  if (!label) return new NextResponse('Bad Request', { status: 400 });
+
+  const key = label.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+  const created = await prisma.recurringMeal.create({
+    data: { userId, key, label },
+  });
+  return NextResponse.json(created);
+}
+
 export async function PUT(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
@@ -22,4 +36,35 @@ export async function PUT(request: Request) {
   });
 
   return NextResponse.json(entry);
+}
+
+export async function PATCH(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return new NextResponse('Unauthorized', { status: 401 });
+  const body = await request.json();
+  const { key, label } = body;
+  if (!key || !label) return new NextResponse('Bad Request', { status: 400 });
+
+  const existing = await prisma.recurringMeal.findUnique({ where: { userId_key: { userId, key } } });
+  if (!existing) return new NextResponse('Not Found', { status: 404 });
+
+  const updated = await prisma.recurringMeal.update({
+    where: { userId_key: { userId, key } },
+    data: { label },
+  });
+  return NextResponse.json(updated);
+}
+
+export async function DELETE(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return new NextResponse('Unauthorized', { status: 401 });
+  const { searchParams } = new URL(request.url);
+  const key = searchParams.get('key');
+  if (!key) return new NextResponse('Bad Request', { status: 400 });
+
+  const existing = await prisma.recurringMeal.findUnique({ where: { userId_key: { userId, key } } });
+  if (!existing) return new NextResponse('Not Found', { status: 404 });
+
+  await prisma.recurringMeal.delete({ where: { userId_key: { userId, key } } });
+  return NextResponse.json({ success: true });
 }

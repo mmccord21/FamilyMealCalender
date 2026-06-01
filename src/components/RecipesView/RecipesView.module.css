@@ -64,6 +64,7 @@
 .rcName  { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 2px; }
 .rcMeta  { font-size: 12px; color: var(--mu); }
 .rcPrice { font-size: 14px; font-weight: 600; color: var(--sage); flex-shrink: 0; }
+.rcTime { font-size: 11px; color: var(--mu); display: flex; align-items: center; gap: 4px; margin-top: 3px; }
 
 .addRecipeCard {
   background: none;

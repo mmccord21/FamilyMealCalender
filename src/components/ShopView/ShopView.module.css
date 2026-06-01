@@ -35,19 +35,42 @@
 
 .iInfo { flex: 1; min-width: 0; }
 .iName { font-size: 14.5px; font-weight: 500; }
-.iAmt { font-size: 12.5px; color: var(--mu); margin-top: 1px; }
 
 .iChips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .mChip { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; color: var(--mu); background: #f5efe8; border: 1px solid var(--bdr); }
 .sharedChip { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--sage); background: #eef5ef; padding: 2px 7px; border-radius: 100px; }
 .storeS { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #3a6b42; background: #eef5ef; }
 .storeC { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #1a4fa0; background: #eef3ff; }
+.storeChip { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: var(--mu); background: #f5efe8; border: 1px solid var(--bdr); }
+
+.manageLink { background: none; border: none; padding: 4px; cursor: pointer; color: var(--mu); border-radius: 6px; display: inline-flex; align-items: center; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.manageLink:hover { color: var(--terra); background: rgba(181,82,42,0.07); }
+
+.storePanel { background: #f9f5f0; border-radius: 12px; padding: 12px; margin-bottom: 13px; display: flex; flex-direction: column; gap: 6px; }
+.storePanelItem { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.storePanelName { flex: 1; font-size: 13px; font-weight: 500; color: var(--br); }
+.storePanelDel { background: none; border: none; color: #c4b5a8; cursor: pointer; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.storePanelDel:hover { color: var(--terra); background: #fff0ee; }
+.storePanelAdd { display: flex; gap: 7px; padding-top: 6px; border-top: 1px solid var(--bdr); }
+.storePanelInput { flex: 1; font-size: 13px; font-family: 'DM Sans', sans-serif; border: 1.5px solid var(--bdr); border-radius: 8px; padding: 8px 11px; outline: none; background: var(--sur); color: var(--br); transition: border-color var(--dur) var(--ease); }
+.storePanelInput:focus { border-color: var(--terra); }
+.storePanelBtn { padding: 8px 14px; background: var(--br); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity var(--dur) var(--ease); }
+.storePanelBtn:disabled { opacity: 0.35; cursor: default; }
 
 .catHdrCustom { border-color: var(--mu) !important; }
 .catLblCustom { color: var(--mu) !important; }
 
 .delBtn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: none; background: none; color: #c4b5a8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
 .delBtn:active { color: var(--terra); background: #fdf0eb; }
+
+.iAmt { font-size: 12.5px; color: var(--mu); margin-top: 1px; display: flex; align-items: center; gap: 4px; }
+
+.qtyBtn { background: none; border: none; padding: 0; cursor: pointer; font-size: 12.5px; color: var(--mu); font-family: 'DM Sans', sans-serif; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: flex-start; border-radius: 6px; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.qtyBtn:hover { color: var(--terra); background: rgba(181,82,42,0.06); }
+.qtyOverridden { color: var(--terra); font-weight: 600; }
+.qtyDot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--terra); flex-shrink: 0; }
+
+.qtyInput { font-size: 12.5px; font-family: 'DM Sans', sans-serif; color: var(--br); border: 1.5px solid var(--terra); border-radius: 6px; padding: 3px 7px; width: 64px; background: var(--sur); outline: none; box-shadow: 0 0 0 3px rgba(181,82,42,0.1); }
 
 .iRight { flex-shrink: 0; margin-top: 1px; }
 .priceBadge { font-size: 13px; color: var(--mu); background: #f5efe8; border-radius: 6px; padding: 3px 8px; cursor: pointer; border: 1px solid transparent; display: block; }

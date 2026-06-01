@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, SearchX } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
@@ -13,17 +13,54 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
+function tagColor(tag: string): string {
+  if (tag === 'keto') return '#3A6B42';
+  if (tag === 'meal-prep' || tag === '30 min') return '#A0652A';
+  return '#B5522A';
+}
+
 export default function RecipePickerModal({ open, recipes, onClose, onSelect }: Props) {
   const [query, setQuery] = useState('');
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
-  const filtered = recipes.filter((r) =>
-    r.name.toLowerCase().includes(query.toLowerCase()) ||
-    (r.sub ?? '').toLowerCase().includes(query.toLowerCase())
-  );
+  useEffect(() => {
+    if (open) setActiveTag(null);
+  }, [open]);
+
+  const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
+
+  const filtered = recipes.filter((r) => {
+    const matchesQuery = r.name.toLowerCase().includes(query.toLowerCase()) ||
+      (r.sub ?? '').toLowerCase().includes(query.toLowerCase());
+    const matchesTag = !activeTag || r.tags.includes(activeTag);
+    return matchesQuery && matchesTag;
+  });
 
   return (
     <Modal open={open} onBackdropClick={onClose}>
       <div className={styles.title}>Choose a Recipe</div>
+      {allTags.length > 0 && (
+        <div className={styles.tagRow}>
+          {allTags.map((tag) => {
+            const color = tagColor(tag);
+            const isActive = activeTag === tag;
+            return (
+              <button
+                key={tag}
+                className={styles.tagPill}
+                onClick={() => setActiveTag(prev => prev === tag ? null : tag)}
+                style={isActive ? {
+                  background: `${color}1a`,
+                  color,
+                  borderColor: color,
+                } : undefined}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div className={styles.searchWrap}>
         <Search size={16} strokeWidth={2} className={styles.searchIcon} />
         <input

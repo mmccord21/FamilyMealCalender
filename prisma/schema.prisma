@@ -18,6 +18,9 @@ model Recipe {
   tags        String[]
   color       String       @default("#888888")
   instructions String?
+  servings    Int          @default(4)
+  prepTime    Int?
+  cookTime    Int?
   ingredients Ingredient[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -95,4 +98,52 @@ model ManualShoppingItem {
   name     String
   weekYear Int
   weekNum  Int
+}
+
+model ShoppingQtyOverride {
+  id       String @id @default(cuid())
+  userId   String
+  itemKey  String
+  qty      Float
+  weekYear Int
+  weekNum  Int
+
+  @@unique([userId, itemKey, weekYear, weekNum])
+}
+
+model UserStore {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+
+  @@unique([userId, name])
+}
+
+model WeekTemplate {
+  id        String         @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime       @default(now())
+  meals     TemplateMeal[]
+}
+
+model TemplateMeal {
+  id         String               @id @default(cuid())
+  template   WeekTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateId String
+  dayKey     String
+  name       String
+  sortOrder  Int                  @default(0)
+  guests     Int?
+  note       String?
+  recipes    TemplateMealRecipe[]
+}
+
+model TemplateMealRecipe {
+  id                String       @id @default(cuid())
+  templateMeal      TemplateMeal @relation(fields: [templateMealId], references: [id], onDelete: Cascade)
+  templateMealId    String
+  recipeId          String
+  sortOrder         Int          @default(0)
+  includeInShopping Boolean      @default(true)
 }

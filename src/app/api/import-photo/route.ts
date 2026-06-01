@@ -38,6 +38,9 @@ export async function POST(request: Request) {
                 description: 'choose 0-3 that fit',
               },
               instructions: { type: 'string', description: 'step-by-step instructions, one step per line; empty string if none visible' },
+              servings: { type: 'integer', description: 'number of servings the recipe makes, omit if unknown' },
+              prepTime: { type: 'integer', description: 'prep time in minutes, omit if unknown' },
+              cookTime: { type: 'integer', description: 'cook time in minutes, omit if unknown' },
               ingredients: {
                 type: 'array',
                 items: {
@@ -83,6 +86,9 @@ export async function POST(request: Request) {
     sub: String(data.sub ?? ''),
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
     instructions: String(data.instructions ?? ''),
+    servings: typeof data.servings === 'number' ? data.servings : 4,
+    prepTime: typeof data.prepTime === 'number' ? data.prepTime : null,
+    cookTime: typeof data.cookTime === 'number' ? data.cookTime : null,
     ingredients: (Array.isArray(data.ingredients) ? data.ingredients as Record<string, unknown>[] : []).map((ing) => ({
       id: Math.random().toString(36).substring(7),
       recipeId: '',

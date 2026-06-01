@@ -3,7 +3,6 @@
 export type RecipeTag = 'keto' | 'meal-prep' | '30 min' | 'crowd-pleaser' | 'fun night' | 'date night';
 export type IngredientCat = 'proteins' | 'produce' | 'dairy' | 'pantry';
 export type Store = 'sprouts' | 'costco';
-export type DayType = 'empty' | 'meal' | 'note';
 export type DayKey = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 
 export interface Ingredient {
@@ -28,16 +27,24 @@ export interface Recipe {
   ingredients: Ingredient[];
 }
 
-export interface WeekEntry {
-  id?: string;
+export interface DayMealRecipe {
+  id: string;
+  dayMealId: string;
+  recipeId: string;
+  sortOrder: number;
+  includeInShopping: boolean;
+}
+
+export interface DayMeal {
+  id: string;
   dayKey: DayKey;
   weekYear: number;
   weekNum: number;
-  type: DayType;
-  recipeId?: string | null;
+  name: string;
+  sortOrder: number;
   guests?: number | null;
   note?: string | null;
-  includeInShopping?: boolean;
+  recipes: DayMealRecipe[];
 }
 
 export interface RecurringMeal {

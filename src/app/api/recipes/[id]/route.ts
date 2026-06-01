@@ -66,8 +66,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const existing = await prisma.recipe.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) return new NextResponse('Unauthorized', { status: 401 });
 
-  // Clear from week entries and recurring first
-  await prisma.weekEntry.updateMany({ where: { recipeId: id }, data: { recipeId: null, type: 'empty' } });
+  await prisma.dayMealRecipe.deleteMany({ where: { recipeId: id } });
   await prisma.recurringMeal.updateMany({ where: { recipeId: id }, data: { recipeId: null } });
   await prisma.recipe.delete({ where: { id } });
   return NextResponse.json({ success: true });

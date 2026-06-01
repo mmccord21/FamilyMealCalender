@@ -35,19 +35,28 @@ model Ingredient {
   noScale  Boolean @default(false)
 }
 
-model WeekEntry {
-  id       String  @id @default(cuid())
-  userId   String
-  dayKey   String  // Mon | Tue | Wed | Thu | Fri | Sat | Sun
-  weekYear Int
-  weekNum  Int
-  type                String  // empty | meal | note
-  recipeId            String?
-  guests              Int?
-  note                String?
-  includeInShopping   Boolean @default(true)
+model DayMeal {
+  id        String          @id @default(cuid())
+  userId    String
+  dayKey    String          // Mon | Tue | Wed | Thu | Fri | Sat | Sun
+  weekYear  Int
+  weekNum   Int
+  name      String          // user-defined: "Breakfast", "Dinner", "Late Snack"
+  sortOrder Int             @default(0)
+  guests    Int?
+  note      String?
+  recipes   DayMealRecipe[]
 
-  @@unique([userId, dayKey, weekYear, weekNum])
+  @@index([userId, dayKey, weekYear, weekNum])
+}
+
+model DayMealRecipe {
+  id                String  @id @default(cuid())
+  dayMeal           DayMeal @relation(fields: [dayMealId], references: [id], onDelete: Cascade)
+  dayMealId         String
+  recipeId          String
+  sortOrder         Int     @default(0)
+  includeInShopping Boolean @default(true)
 }
 
 model RecurringMeal {

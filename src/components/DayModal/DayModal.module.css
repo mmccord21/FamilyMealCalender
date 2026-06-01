@@ -7,101 +7,186 @@
 .date {
   font-size: 13px;
   color: var(--mu);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   line-height: 1.4;
 }
 
-.modeToggle {
+/* ── Meal slot list ── */
+.mealList {
   display: flex;
-  background: #f5efe8;
-  border-radius: var(--r-sm);
-  padding: 3px;
-  margin-bottom: 14px;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.modeOpt {
-  flex: 1;
-  display: inline-flex;
+.emptyDay {
+  font-size: 13px;
+  color: var(--mu);
+  text-align: center;
+  padding: 20px 0 8px;
+  font-style: italic;
+}
+
+/* ── Individual slot card ── */
+.mealSlot {
+  background: #f9f5f0;
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slotHead {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px;
-  border-radius: 8px;
+  gap: 8px;
+}
+
+.slotNameInput {
+  flex: 1;
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--br);
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  outline: none;
+  padding: 2px 0 3px;
+  transition: border-color var(--dur) var(--ease);
+  min-width: 0;
+}
+.slotNameInput:focus {
+  border-bottom-color: var(--gold);
+}
+.slotNameInput::placeholder {
+  color: var(--mu);
+  font-style: italic;
+}
+
+.deleteSlotBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
   border: none;
   background: none;
+  color: var(--mu);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.deleteSlotBtn:hover { background: #fff0ee; color: var(--terra); }
+.deleteSlotBtn:active { background: #ffe4e0; }
+
+/* ── Recipe pills ── */
+.slotRecipes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recipePill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+}
+
+.pillEmoji {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pillName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--br);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pillShop {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bdr);
+  background: none;
+  color: var(--mu);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.pillShop:hover { border-color: var(--sage); color: var(--sage); }
+.shopOn {
+  background: #e4f0e6;
+  color: var(--sage);
+  border-color: var(--sage);
+}
+
+.pillRemove {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--mu);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.pillRemove:hover { background: #fff0ee; color: var(--terra); }
+.pillRemove:active { background: #ffe4e0; }
+
+/* ── Add recipe button ── */
+.addRecipeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  background: none;
+  border: 1.5px dashed var(--bdr);
+  border-radius: var(--r-sm);
   font-size: 13px;
   font-weight: 600;
   color: var(--mu);
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-  text-align: center;
-}
-
-.on {
-  background: var(--sur);
-  color: var(--br);
-  box-shadow: var(--shadow-sm);
-}
-
-.chosenRecipe {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #f9f5f0;
-  border: 1px solid var(--bdr);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  margin-top: 12px;
-  cursor: pointer;
-  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.chosenRecipe:active { transform: scale(0.99); }
-.chosenRecipe:hover { border-color: var(--gold); }
-
-.crEmoji {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-.crName  { font-family: 'Playfair Display', serif; font-size: 15px; flex: 1; }
-.crChange{ display: inline-flex; align-items: center; gap: 1px; font-size: 12px; color: var(--gold); font-weight: 600; }
-
-.noRecipeBtn {
   width: 100%;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding: 16px;
-  background: none;
-  border: 2px dashed var(--bdr);
-  border-radius: var(--r-md);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--mu);
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  text-align: center;
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.noRecipeBtn:hover { border-color: var(--terra); color: var(--terra); }
-.noRecipeBtn:active { background: #fbf5ee; }
+.addRecipeBtn:hover { border-color: var(--terra); color: var(--terra); }
+.addRecipeBtn:active { background: #fbf5ee; }
 
+/* ── Guest stepper ── */
 .guestRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9f5f0;
-  border-radius: var(--r-md);
-  padding: 12px 16px;
-  margin-top: 14px;
 }
 
 .grLbl { font-size: 13px; font-weight: 600; }
@@ -119,8 +204,8 @@
 .gsBtn {
   background: none;
   border: none;
-  width: 40px;
-  height: 36px;
+  width: 38px;
+  height: 34px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -131,138 +216,68 @@
 .gsBtn:active { background: var(--bdr); }
 
 .gsNum {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  min-width: 28px;
+  min-width: 26px;
   text-align: center;
 }
 
-.shopToggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f9f5f0;
-  border-radius: var(--r-md);
-  padding: 12px 14px;
-  margin-top: 10px;
-  cursor: pointer;
-  border: 1.5px solid var(--bdr);
-  width: 100%;
-  text-align: left;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  font-family: 'DM Sans', sans-serif;
-}
-.shopToggleRow:active { background: #f2ece4; }
-
-.shopToggleLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.shopToggleIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-sm);
-  background: var(--bdr);
+/* ── Add meal area ── */
+.addMealTrigger {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--mu);
-  flex-shrink: 0;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.shopIconOn {
-  background: #e4f0e6;
-  color: var(--sage);
-}
-
-.shopToggleLbl {
-  font-size: 13px;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: none;
+  border: 2px dashed var(--bdr);
+  border-radius: var(--r-md);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--br);
-}
-.shopToggleSub {
-  font-size: 11px;
   color: var(--mu);
-  margin-top: 1px;
-}
-
-.toggle {
-  width: 44px;
-  height: 26px;
-  border-radius: 100px;
-  background: var(--bdr);
-  position: relative;
-  flex-shrink: 0;
-  transition: background var(--dur) var(--ease);
-}
-.toggleOn { background: var(--sage); }
-
-.toggleThumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 100px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-  transition: transform var(--dur) var(--ease);
-}
-.toggleOn .toggleThumb { transform: translateX(18px); }
-
-.mLbl {
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--mu);
-  margin: 14px 0 7px;
-}
-
-.quickChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 12px;
-}
-
-.qc {
-  font-size: 12px;
-  border: 1.5px solid var(--bdr);
-  background: var(--sur);
-  border-radius: 100px;
-  padding: 6px 12px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s;
+  margin-bottom: 14px;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.addMealTrigger:hover { border-color: var(--terra); color: var(--terra); }
+.addMealTrigger:active { background: #fbf5ee; }
+
+.addMealForm {
+  background: #f9f5f0;
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.qc.picked {
-  border-color: var(--gold);
-  background: #fff8ef;
-}
-
-.textarea {
+.addMealInput {
   width: 100%;
   font-size: 15px;
   font-family: 'DM Sans', sans-serif;
   border: none;
   border-bottom: 2px solid var(--gold);
   outline: none;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   background: transparent;
   color: var(--br);
-  resize: none;
-  height: 52px;
-  line-height: 1.5;
-  margin-top: 6px;
+}
+.addMealInput::placeholder { color: var(--mu); }
+
+.addMealActions {
+  display: flex;
+  gap: 8px;
 }
 
+/* ── Bottom actions ── */
 .actions {
   display: flex;
   gap: 9px;
-  margin-top: 20px;
+  margin-top: 4px;
 }
 
 .btnPri {
@@ -279,6 +294,7 @@
   transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 .btnPri:active { transform: scale(0.97); opacity: 0.92; }
+.btnPri:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .btnSec {
   flex: 1;
@@ -294,23 +310,3 @@
   transition: transform var(--dur) var(--ease);
 }
 .btnSec:active { transform: scale(0.97); }
-
-.btnDanger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: #fff0ee;
-  color: var(--terra);
-  border: none;
-  border-radius: var(--r-sm);
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
-  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.btnDanger:active { transform: scale(0.98); background: #ffe6e2; }

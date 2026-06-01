@@ -391,3 +391,63 @@
 
 .recSub { font-size: 12px; color: var(--mu); margin-top: 1px; }
 .recArrow { color: #d4c4b4; flex-shrink: 0; }
+
+/* ── Multi-meal slot display ── */
+.slotsBody {
+  flex: 1;
+  min-width: 0;
+  padding-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.slotLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--mu);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 58px;
+  text-transform: uppercase;
+}
+
+.slotChips {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.slotChip {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease);
+  line-height: 1;
+}
+.slotChip:hover { transform: scale(1.12); }
+.slotChip:active { transform: scale(0.92); }
+
+.slotNoRecipe {
+  font-size: 11px;
+  color: var(--mu);
+  opacity: 0.55;
+  font-style: italic;
+}

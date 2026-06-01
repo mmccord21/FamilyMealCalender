@@ -14,9 +14,11 @@ export async function GET(request: Request) {
   today.setDate(today.getDate() + offset * 7);
   const { weekYear, weekNum } = getISOWeek(today);
 
-  const entries = await prisma.weekEntry.findMany({
+  const meals = await prisma.dayMeal.findMany({
     where: { userId, weekYear, weekNum },
+    include: { recipes: { orderBy: { sortOrder: 'asc' } } },
+    orderBy: [{ dayKey: 'asc' }, { sortOrder: 'asc' }],
   });
 
-  return NextResponse.json({ weekYear, weekNum, entries });
+  return NextResponse.json({ weekYear, weekNum, meals });
 }

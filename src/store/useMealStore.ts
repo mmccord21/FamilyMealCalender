@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import type { Recipe, WeekEntry, RecurringMeal, ManualShoppingItem } from '@/types';
+import type { Recipe, DayMeal, DayMealRecipe, RecurringMeal, ManualShoppingItem } from '@/types';
 import { getISOWeek } from '@/lib/helpers';
 
 interface MealState {
   recipes: Recipe[];
-  weekEntries: WeekEntry[];
+  dayMeals: DayMeal[];
   recurring: RecurringMeal[];
   prices: Record<string, number>;
   checkedItems: Record<string, boolean>;
@@ -14,14 +14,18 @@ interface MealState {
   weekLoading: boolean;
   activeTab: 'plan' | 'recipes' | 'shop';
 
-  // Actions
   setInitialData: (data: Partial<MealState>) => void;
   setActiveTab: (tab: 'plan' | 'recipes' | 'shop') => void;
-  setWeekOffset: (offset: number) => void;
+  setWeekOffset: (delta: number) => void;
 
-  // API Actions
   fetchWeek: () => Promise<void>;
-  saveDay: (key: string, entry: Partial<WeekEntry>) => Promise<void>;
+  addDayMeal: (dayKey: string, name: string) => Promise<DayMeal>;
+  updateDayMeal: (id: string, fields: Partial<Pick<DayMeal, 'name' | 'guests' | 'note' | 'sortOrder'>>) => Promise<void>;
+  deleteDayMeal: (id: string) => Promise<void>;
+  addRecipeToDayMeal: (dayMealId: string, recipeId: string) => Promise<DayMealRecipe>;
+  removeRecipeFromDayMeal: (dayMealId: string, dmrId: string) => Promise<void>;
+  updateDayMealRecipe: (dayMealId: string, dmrId: string, fields: { sortOrder?: number; includeInShopping?: boolean }) => Promise<void>;
+
   saveRecurring: (key: string, recipeId: string | null) => Promise<void>;
   saveRecipe: (recipe: Partial<Recipe>) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
@@ -32,9 +36,15 @@ interface MealState {
   deleteManualItem: (id: string) => Promise<void>;
 }
 
+function weekFromOffset(offset: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset * 7);
+  return getISOWeek(d);
+}
+
 export const useMealStore = create<MealState>((set, get) => ({
   recipes: [],
-  weekEntries: [],
+  dayMeals: [],
   recurring: [],
   prices: {},
   checkedItems: {},
@@ -44,13 +54,9 @@ export const useMealStore = create<MealState>((set, get) => ({
   weekLoading: false,
   activeTab: 'plan',
 
-  setInitialData: (data) => set((state) => ({
-    ...state,
-    ...data,
-    manualItems: data.manualItems ?? state.manualItems,
-  })),
+  setInitialData: (data) => set((state) => ({ ...state, ...data, manualItems: data.manualItems ?? state.manualItems })),
   setActiveTab: (tab) => set({ activeTab: tab }),
-  
+
   setWeekOffset: (delta) => {
     set((state) => ({ weekOffset: state.weekOffset + delta }));
     get().fetchWeek();
@@ -62,7 +68,7 @@ export const useMealStore = create<MealState>((set, get) => ({
     try {
       const res = await fetch(`/api/week?offset=${weekOffset}`);
       if (!res.ok) {
-        set({ weekEntries: [], checkedItems: {}, weekLoading: false });
+        set({ dayMeals: [], checkedItems: {}, weekLoading: false });
         return;
       }
       const data = await res.json();
@@ -79,38 +85,111 @@ export const useMealStore = create<MealState>((set, get) => ({
         if (manualRes.ok) manualItems = await manualRes.json();
       } catch { /* non-critical */ }
 
-      set({ weekEntries: data.entries, checkedItems: checked, manualItems, weekLoading: false });
+      set({ dayMeals: data.meals, checkedItems: checked, manualItems, weekLoading: false });
     } catch {
-      set({ weekEntries: [], checkedItems: {}, weekLoading: false });
+      set({ dayMeals: [], checkedItems: {}, weekLoading: false });
     }
   },
 
-  saveDay: async (key, entry) => {
-    const { weekOffset, weekEntries } = get();
-    const today = new Date();
-    today.setDate(today.getDate() + weekOffset * 7);
-    const { weekYear, weekNum } = getISOWeek(today);
+  addDayMeal: async (dayKey, name) => {
+    const { weekOffset, dayMeals } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+    const sortOrder = dayMeals.filter((m) => m.dayKey === dayKey).length;
 
-    // Optimistic
-    const existingIdx = weekEntries.findIndex((e) => e.dayKey === key);
-    const newEntry = { dayKey: key as any, weekYear, weekNum, ...entry } as WeekEntry;
-    
-    const newEntries = [...weekEntries];
-    if (existingIdx >= 0) newEntries[existingIdx] = { ...newEntries[existingIdx], ...newEntry };
-    else newEntries.push(newEntry);
-    set({ weekEntries: newEntries });
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: DayMeal = {
+      id: tempId,
+      dayKey: dayKey as DayMeal['dayKey'],
+      weekYear,
+      weekNum,
+      name,
+      sortOrder,
+      guests: null,
+      note: null,
+      recipes: [],
+    };
+    set({ dayMeals: [...dayMeals, optimistic] });
 
-    await fetch(`/api/week/${key}`, {
-      method: 'PUT',
-      body: JSON.stringify(newEntry),
+    const res = await fetch('/api/meals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dayKey, weekYear, weekNum, name, sortOrder }),
+    });
+    const saved: DayMeal = await res.json();
+    set((state) => ({ dayMeals: state.dayMeals.map((m) => m.id === tempId ? saved : m) }));
+    return saved;
+  },
+
+  updateDayMeal: async (id, fields) => {
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) => m.id === id ? { ...m, ...fields } : m),
+    }));
+    await fetch(`/api/meals/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    });
+  },
+
+  deleteDayMeal: async (id) => {
+    set((state) => ({ dayMeals: state.dayMeals.filter((m) => m.id !== id) }));
+    await fetch(`/api/meals/${id}`, { method: 'DELETE' });
+  },
+
+  addRecipeToDayMeal: async (dayMealId, recipeId) => {
+    const meal = get().dayMeals.find((m) => m.id === dayMealId);
+    const sortOrder = meal ? meal.recipes.length : 0;
+
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: DayMealRecipe = { id: tempId, dayMealId, recipeId, sortOrder, includeInShopping: true };
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) =>
+        m.id === dayMealId ? { ...m, recipes: [...m.recipes, optimistic] } : m
+      ),
+    }));
+
+    const res = await fetch(`/api/meals/${dayMealId}/recipes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipeId, sortOrder }),
+    });
+    const saved: DayMealRecipe = await res.json();
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) =>
+        m.id === dayMealId
+          ? { ...m, recipes: m.recipes.map((r) => r.id === tempId ? saved : r) }
+          : m
+      ),
+    }));
+    return saved;
+  },
+
+  removeRecipeFromDayMeal: async (dayMealId, dmrId) => {
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) =>
+        m.id === dayMealId ? { ...m, recipes: m.recipes.filter((r) => r.id !== dmrId) } : m
+      ),
+    }));
+    await fetch(`/api/meals/${dayMealId}/recipes/${dmrId}`, { method: 'DELETE' });
+  },
+
+  updateDayMealRecipe: async (dayMealId, dmrId, fields) => {
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) =>
+        m.id === dayMealId
+          ? { ...m, recipes: m.recipes.map((r) => r.id === dmrId ? { ...r, ...fields } : r) }
+          : m
+      ),
+    }));
+    await fetch(`/api/meals/${dayMealId}/recipes/${dmrId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
     });
   },
 
   saveRecurring: async (key, recipeId) => {
-    const { recurring } = get();
-    const newRec = recurring.map((r) => r.key === key ? { ...r, recipeId } : r);
-    set({ recurring: newRec });
-
+    set((state) => ({ recurring: state.recurring.map((r) => r.key === key ? { ...r, recipeId } : r) }));
     await fetch('/api/recurring', {
       method: 'PUT',
       body: JSON.stringify({ key, recipeId }),
@@ -133,12 +212,14 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   deleteRecipe: async (id) => {
-    const { recipes, weekEntries, recurring } = get();
-    set({
-      recipes: recipes.filter((r) => r.id !== id),
-      weekEntries: weekEntries.map((e) => e.recipeId === id ? { ...e, type: 'empty', recipeId: null } : e),
-      recurring: recurring.map((r) => r.recipeId === id ? { ...r, recipeId: null } : r),
-    });
+    set((state) => ({
+      recipes: state.recipes.filter((r) => r.id !== id),
+      dayMeals: state.dayMeals.map((m) => ({
+        ...m,
+        recipes: m.recipes.filter((r) => r.recipeId !== id),
+      })),
+      recurring: state.recurring.map((r) => r.recipeId === id ? { ...r, recipeId: null } : r),
+    }));
     await fetch(`/api/recipes/${id}`, { method: 'DELETE' });
   },
 
@@ -148,31 +229,19 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   toggleCheck: async (itemKey, checked) => {
-    const { weekOffset } = get();
-    const today = new Date();
-    today.setDate(today.getDate() + weekOffset * 7);
-    const { weekYear, weekNum } = getISOWeek(today);
-
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
     set((state) => ({ checkedItems: { ...state.checkedItems, [itemKey]: checked } }));
     await fetch('/api/checked', { method: 'PUT', body: JSON.stringify({ itemKey, checked, weekYear, weekNum }) });
   },
 
   resetChecked: async () => {
-    const { weekOffset } = get();
-    const today = new Date();
-    today.setDate(today.getDate() + weekOffset * 7);
-    const { weekYear, weekNum } = getISOWeek(today);
-
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
     set({ checkedItems: {} });
     await fetch(`/api/checked?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' });
   },
 
   addManualItem: async (name) => {
-    const { weekOffset } = get();
-    const today = new Date();
-    today.setDate(today.getDate() + weekOffset * 7);
-    const { weekYear, weekNum } = getISOWeek(today);
-
+    const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
     const tempId = `temp-${Date.now()}`;
     set((state) => ({ manualItems: [...state.manualItems, { id: tempId, name, weekYear, weekNum }] }));
 

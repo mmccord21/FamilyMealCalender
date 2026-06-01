@@ -22,9 +22,13 @@ export default async function Home() {
     );
   }
 
-  const [recipes, weekEntries, recurring, prices, checks, manualItems] = await Promise.all([
+  const [recipes, dayMeals, recurring, prices, checks, manualItems] = await Promise.all([
     prisma.recipe.findMany({ where: { userId }, include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
-    prisma.weekEntry.findMany({ where: { userId, weekYear, weekNum } }),
+    prisma.dayMeal.findMany({
+      where: { userId, weekYear, weekNum },
+      include: { recipes: { orderBy: { sortOrder: 'asc' } } },
+      orderBy: [{ dayKey: 'asc' }, { sortOrder: 'asc' }],
+    }),
     prisma.recurringMeal.findMany({ where: { userId } }),
     prisma.ingredientPrice.findMany({ where: { userId } }),
     prisma.shoppingCheck.findMany({ where: { userId, weekYear, weekNum } }),
@@ -40,7 +44,7 @@ export default async function Home() {
   return (
     <MealPlannerApp
       initialRecipes={recipes as any}
-      initialWeek={weekEntries as any}
+      initialWeek={dayMeals as any}
       initialRecurring={recurring}
       initialPrices={pricesObj}
       initialChecked={checksObj}

@@ -15,11 +15,11 @@ import Toast from '@/components/Toast/Toast';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
-import type { Recipe, WeekEntry, RecurringMeal, ManualShoppingItem } from '@/types';
+import type { Recipe, DayMeal, RecurringMeal, ManualShoppingItem } from '@/types';
 
 interface Props {
   initialRecipes: Recipe[];
-  initialWeek: WeekEntry[];
+  initialWeek: DayMeal[];
   initialRecurring: RecurringMeal[];
   initialPrices: Record<string, number>;
   initialChecked: Record<string, boolean>;
@@ -32,19 +32,20 @@ export default function MealPlannerApp({
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
 
-  // Modals state
   const [dayModalOpen, setDayModalOpen] = useState(false);
   const [editDayKey, setEditDayKey] = useState<string>('Mon');
   const [editDayIdx, setEditDayIdx] = useState(0);
+
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<'day' | 'recurring'>('day');
+  const [pickerForMealId, setPickerForMealId] = useState<string | null>(null);
   const [editRecurKey, setEditRecurKey] = useState<string | null>(null);
-  
+
   const [recipeModalOpen, setRecipeModalOpen] = useState(false);
   const [editRecipeId, setEditRecipeId] = useState<string | null>(null);
-  
+
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerRecipeId, setViewerRecipeId] = useState<string | null>(null);
+  const [viewerDayMealId, setViewerDayMealId] = useState<string | null>(null);
   const [viewerDayKey, setViewerDayKey] = useState<string | null>(null);
   const [viewerDayIdx, setViewerDayIdx] = useState(0);
 
@@ -53,14 +54,10 @@ export default function MealPlannerApp({
   const [priceItemName, setPriceItemName] = useState('');
   const [priceItemAmt, setPriceItemAmt] = useState('');
 
-  // Draft picked recipe for day modal
-  const [pickedRecipeId, setPickedRecipeId] = useState<string | null>(null);
-
-  // Hydrate store exactly once on mount
   useEffect(() => {
     useMealStore.getState().setInitialData({
       recipes: initialRecipes,
-      weekEntries: initialWeek,
+      dayMeals: initialWeek,
       recurring: initialRecurring,
       prices: initialPrices,
       checkedItems: initialChecked,
@@ -73,7 +70,7 @@ export default function MealPlannerApp({
     setTimeout(() => setToastMsg(''), 2500);
   };
 
-  const shoppingList = buildShoppingList(store.recipes, store.weekEntries, store.recurring);
+  const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring);
   const estTotal = calcTotal(shoppingList, store.prices);
 
   const handleCopyList = (txt: string) => {
@@ -84,12 +81,12 @@ export default function MealPlannerApp({
     <div className="app">
       <Header total={estTotal} />
       <TabBar active={store.activeTab} onChange={store.setActiveTab} />
-      
+
       <div className="scroll">
         <div style={{ display: store.activeTab === 'plan' ? 'block' : 'none' }}>
           <WeekView
             recipes={store.recipes}
-            weekEntries={store.weekEntries}
+            dayMeals={store.dayMeals}
             recurring={store.recurring}
             weekOffset={store.weekOffset}
             loading={store.weekLoading}
@@ -97,19 +94,18 @@ export default function MealPlannerApp({
             onOpenDay={(key, idx) => {
               setEditDayKey(key);
               setEditDayIdx(idx);
-              const e = store.weekEntries.find((we) => we.dayKey === key);
-              setPickedRecipeId(e?.type === 'meal' ? (e.recipeId || null) : null);
               setDayModalOpen(true);
             }}
-            onViewRecipe={(recipeId, dayKey, dayIdx) => {
+            onViewRecipe={(recipeId, dayMealId, dayKey, dayIdx) => {
               setViewerRecipeId(recipeId);
+              setViewerDayMealId(dayMealId);
               setViewerDayKey(dayKey);
               setViewerDayIdx(dayIdx);
               setViewerOpen(true);
             }}
             onOpenRecurring={(key) => {
               setEditRecurKey(key);
-              setPickerTarget('recurring');
+              setPickerForMealId(null);
               setPickerOpen(true);
             }}
           />
@@ -121,6 +117,7 @@ export default function MealPlannerApp({
             prices={store.prices}
             onView={(id) => {
               setViewerRecipeId(id);
+              setViewerDayMealId(null);
               setViewerDayKey(null);
               setViewerOpen(true);
             }}
@@ -152,22 +149,15 @@ export default function MealPlannerApp({
         </div>
       </div>
 
-      {/* Modals */}
       <RecipeViewerModal
         open={viewerOpen}
         recipe={store.recipes.find((r) => r.id === viewerRecipeId) || null}
-        guests={
-          viewerDayKey
-            ? (store.weekEntries.find((e) => e.dayKey === viewerDayKey)?.guests ?? BASE_GUESTS)
-            : BASE_GUESTS
-        }
+        guests={store.dayMeals.find((m) => m.id === viewerDayMealId)?.guests ?? BASE_GUESTS}
         onClose={() => setViewerOpen(false)}
         onEditDay={viewerDayKey ? () => {
           setViewerOpen(false);
           setEditDayKey(viewerDayKey);
           setEditDayIdx(viewerDayIdx);
-          const e = store.weekEntries.find((we) => we.dayKey === viewerDayKey);
-          setPickedRecipeId(e?.type === 'meal' ? (e.recipeId || null) : null);
           setDayModalOpen(true);
         } : undefined}
         onEditRecipe={() => {
@@ -182,33 +172,11 @@ export default function MealPlannerApp({
         dayKey={editDayKey}
         dayIdx={editDayIdx}
         weekOffset={store.weekOffset}
-        entry={store.weekEntries.find((e) => e.dayKey === editDayKey) || null}
+        dayMeals={store.dayMeals.filter((m) => m.dayKey === editDayKey)}
         recipes={store.recipes}
-        pickedRecipeId={pickedRecipeId}
-        setPickedRecipeId={setPickedRecipeId}
         onClose={() => setDayModalOpen(false)}
-        onSave={(e) => {
-          store.saveDay(editDayKey, e);
-          setDayModalOpen(false);
-          if (e.type === 'meal' && e.recipeId) {
-            const r = store.recipes.find((rec) => rec.id === e.recipeId);
-            const count = r?.ingredients.length ?? 0;
-            showToast(
-              e.includeInShopping !== false
-                ? `${r?.name ?? 'Meal'} saved · ${count} item${count !== 1 ? 's' : ''} added to list`
-                : `${r?.name ?? 'Meal'} saved · not in grocery list`
-            );
-          } else {
-            showToast('Saved ✓');
-          }
-        }}
-        onClear={() => {
-          store.saveDay(editDayKey, { type: 'empty', recipeId: null, guests: null, note: null });
-          setDayModalOpen(false);
-          showToast('Cleared');
-        }}
-        onOpenPicker={() => {
-          setPickerTarget('day');
+        onOpenPicker={(mealId) => {
+          setPickerForMealId(mealId);
           setPickerOpen(true);
         }}
       />
@@ -216,14 +184,20 @@ export default function MealPlannerApp({
       <RecipePickerModal
         open={pickerOpen}
         recipes={store.recipes}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          setPickerForMealId(null);
+        }}
         onSelect={(id) => {
-          if (pickerTarget === 'day') {
-            setPickedRecipeId(id);
-          } else if (pickerTarget === 'recurring' && editRecurKey) {
+          if (pickerForMealId) {
+            store.addRecipeToDayMeal(pickerForMealId, id);
+            showToast('Recipe added ✓');
+          } else if (editRecurKey) {
             store.saveRecurring(editRecurKey, id);
             showToast('Updated ✓');
           }
+          setPickerOpen(false);
+          setPickerForMealId(null);
         }}
       />
 

@@ -1,4 +1,4 @@
-import type { DayKey, IngredientCat, Recipe, ShoppingItem } from '@/types';
+import type { DayKey, DayMeal, IngredientCat, Recipe, ShoppingItem } from '@/types';
 
 export const EMOJIS = ['🍳','🥗','🐟','🍗','🍔','🥩','🦐','🥘','🫕','🍝','🌮','🥙','🥑','🍣','🥚','🫔','🧆','🍲','🥣','🥦','🦀','🐙','🫶','🍱','🥞','🧇','🫙','🍜','🫚','🍵'];
 
@@ -69,17 +69,13 @@ export function fmtShopAmt(item: ShoppingItem): string {
 
 export function buildShoppingList(
   recipes: Recipe[],
-  weekEntries: { dayKey: string; recipeId?: string | null; guests?: number | null; type: string; includeInShopping?: boolean }[],
+  dayMeals: DayMeal[],
   recurring: { key: string; recipeId?: string | null }[],
 ): ShoppingItem[] {
   const merged: Record<string, ShoppingItem> = {};
   let counter = 0;
 
-  function addIngs(
-    ingredients: Recipe['ingredients'],
-    dayKey: string,
-    scale: number,
-  ) {
+  function addIngs(ingredients: Recipe['ingredients'], dayKey: string, scale: number) {
     ingredients.forEach((ing) => {
       const mk = ing.name.toLowerCase().trim();
       if (!merged[mk]) {
@@ -101,16 +97,15 @@ export function buildShoppingList(
     });
   }
 
-  // Week days
-  weekEntries.forEach((e) => {
-    if (e.type !== 'meal' || !e.recipeId) return;
-    if (e.includeInShopping === false) return;
-    const recipe = recipes.find((r) => r.id === e.recipeId);
-    if (!recipe) return;
-    addIngs(recipe.ingredients, e.dayKey, (e.guests ?? BASE_GUESTS) / BASE_GUESTS);
+  dayMeals.forEach((meal) => {
+    meal.recipes.forEach((dmr) => {
+      if (!dmr.includeInShopping) return;
+      const recipe = recipes.find((r) => r.id === dmr.recipeId);
+      if (!recipe) return;
+      addIngs(recipe.ingredients, meal.dayKey, (meal.guests ?? BASE_GUESTS) / BASE_GUESTS);
+    });
   });
 
-  // Recurring
   recurring.forEach((r) => {
     if (!r.recipeId) return;
     const recipe = recipes.find((rec) => rec.id === r.recipeId);

@@ -1,19 +1,19 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, ChevronRight as Caret, Plus, StickyNote, Users, UtensilsCrossed } from 'lucide-react';
-import type { Recipe, WeekEntry, RecurringMeal } from '@/types';
-import { DAY_KEYS, REC_COLORS, TAG_COLORS, BASE_GUESTS, getWeekDates, isToday } from '@/lib/helpers';
+import { ChevronLeft, ChevronRight, ChevronRight as Caret, Plus, UtensilsCrossed } from 'lucide-react';
+import type { Recipe, DayMeal, RecurringMeal } from '@/types';
+import { DAY_KEYS, REC_COLORS, getWeekDates, isToday } from '@/lib/helpers';
 import styles from './WeekView.module.css';
 
 interface Props {
   recipes: Recipe[];
-  weekEntries: WeekEntry[];
+  dayMeals: DayMeal[];
   recurring: RecurringMeal[];
   weekOffset: number;
   loading?: boolean;
   onShiftWeek: (dir: number) => void;
   onOpenDay: (key: string, idx: number) => void;
-  onViewRecipe: (recipeId: string, dayKey: string, dayIdx: number) => void;
+  onViewRecipe: (recipeId: string, dayMealId: string, dayKey: string, dayIdx: number) => void;
   onOpenRecurring: (key: string) => void;
 }
 
@@ -22,7 +22,7 @@ const DAY_ABBR: Record<string, string> = {
 };
 
 export default function WeekView({
-  recipes, weekEntries, recurring, weekOffset, loading = false,
+  recipes, dayMeals, recurring, weekOffset, loading = false,
   onShiftWeek, onOpenDay, onViewRecipe, onOpenRecurring,
 }: Props) {
   const dates = getWeekDates(weekOffset);
@@ -33,8 +33,11 @@ export default function WeekView({
     weekOffset === -1 ? 'Last week' :
     weekOffset === 1 ? 'Next week' : '';
 
-  const entryMap: Record<string, WeekEntry> = {};
-  weekEntries.forEach((e) => { entryMap[e.dayKey] = e; });
+  const mealMap: Record<string, DayMeal[]> = {};
+  dayMeals.forEach((m) => {
+    if (!mealMap[m.dayKey]) mealMap[m.dayKey] = [];
+    mealMap[m.dayKey].push(m);
+  });
 
   return (
     <div className={styles.view}>
@@ -56,9 +59,10 @@ export default function WeekView({
       <div className={styles.overview}>
         {DAY_KEYS.map((key, i) => {
           const d = dates[i];
-          const e = entryMap[key] ?? { type: 'empty', dayKey: key } as WeekEntry;
           const today = isToday(d);
-          const recipe = e.type === 'meal' && e.recipeId ? recipes.find((r) => r.id === e.recipeId) : null;
+          const meals = mealMap[key] ?? [];
+          const firstRecipeId = meals.flatMap((m) => m.recipes)[0]?.recipeId;
+          const firstRecipe = firstRecipeId ? recipes.find((r) => r.id === firstRecipeId) : null;
           return (
             <button
               key={key}
@@ -69,8 +73,7 @@ export default function WeekView({
               <span className={styles.ovLetter}>{key[0]}</span>
               <span
                 className={styles.ovDot}
-                style={recipe ? { background: recipe.color, borderColor: recipe.color } : undefined}
-                data-note={e.type === 'note' ? '' : undefined}
+                style={firstRecipe ? { background: firstRecipe.color, borderColor: firstRecipe.color } : undefined}
               />
             </button>
           );
@@ -100,18 +103,17 @@ export default function WeekView({
             );
           }
 
-          const e = entryMap[key] ?? { type: 'empty', dayKey: key } as WeekEntry;
-          const recipe = e.type === 'meal' && e.recipeId ? recipes.find((r) => r.id === e.recipeId) : null;
+          const meals = mealMap[key] ?? [];
+          const firstColor = meals
+            .flatMap((m) => m.recipes)
+            .map((dmr) => recipes.find((r) => r.id === dmr.recipeId)?.color)
+            .find(Boolean);
 
           return (
             <div
               key={key}
               className={`${styles.dayRow} ${today ? styles.today : ''}`}
-              onClick={() =>
-                e.type === 'meal' && recipe
-                  ? onViewRecipe(recipe.id, key, i)
-                  : onOpenDay(key, i)
-              }
+              onClick={() => onOpenDay(key, i)}
             >
               <div className={styles.dayBadge}>
                 <div className={styles.dayAbbr}>{DAY_ABBR[key]}</div>
@@ -119,43 +121,41 @@ export default function WeekView({
               </div>
 
               <div className={styles.dayContent}>
-                {e.type === 'meal' && recipe ? (
+                {meals.length > 0 ? (
                   <>
-                    <div className={styles.dayAccent} style={{ background: recipe.color }} />
-                    <div className={styles.mealBody}>
-                      <div className={styles.mealTop}>
-                        <span className={styles.mealEmoji} style={{ background: `${recipe.color}1a` }}>{recipe.emoji}</span>
-                        <span className={styles.mealName}>{recipe.name}</span>
-                      </div>
-                      {recipe.sub && <div className={styles.mealSub}>{recipe.sub}</div>}
-                      {(recipe.tags.length > 0 || (e.guests ?? BASE_GUESTS) !== BASE_GUESTS) && (
-                        <div className={styles.mealTags}>
-                          {recipe.tags.map((t) => {
-                            const c = TAG_COLORS[t] ?? '#9B8B7B';
-                            return (
-                              <span key={t} className={styles.tag} style={{ color: c, background: `${c}1a` }}>{t}</span>
-                            );
-                          })}
-                          {(e.guests ?? BASE_GUESTS) !== BASE_GUESTS && (
-                            <span className={styles.guestsBadge}><Users size={11} strokeWidth={2.5} /> {e.guests}</span>
-                          )}
-                        </div>
-                      )}
+                    {firstColor && <div className={styles.dayAccent} style={{ background: firstColor }} />}
+                    <div className={styles.slotsBody}>
+                      {meals.map((meal) => {
+                        const mealRecipes = meal.recipes
+                          .map((dmr) => recipes.find((r) => r.id === dmr.recipeId))
+                          .filter((r): r is Recipe => !!r);
+                        return (
+                          <div key={meal.id} className={styles.slotRow}>
+                            <span className={styles.slotLabel}>{meal.name}</span>
+                            <div className={styles.slotChips}>
+                              {mealRecipes.map((r) => (
+                                <span
+                                  key={r.id}
+                                  className={styles.slotChip}
+                                  style={{ background: `${r.color}1a` }}
+                                  onClick={(e) => { e.stopPropagation(); onViewRecipe(r.id, meal.id, key, i); }}
+                                  title={r.name}
+                                >{r.emoji}</span>
+                              ))}
+                              {mealRecipes.length === 0 && (
+                                <span className={styles.slotNoRecipe}>No recipe</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <Caret className={styles.arrow} size={18} strokeWidth={2} />
-                  </>
-                ) : e.type === 'note' ? (
-                  <>
-                    <span className={styles.noteTxt}>
-                      <StickyNote size={14} strokeWidth={2} className={styles.noteIcon} />
-                      {e.note}
-                    </span>
                     <Caret className={styles.arrow} size={18} strokeWidth={2} />
                   </>
                 ) : (
                   <div className={styles.emptyBody}>
                     <div className={styles.plusCircle}><Plus size={16} strokeWidth={2.5} /></div>
-                    <span className={styles.emptyLbl}>Plan dinner</span>
+                    <span className={styles.emptyLbl}>Plan your day</span>
                   </div>
                 )}
               </div>

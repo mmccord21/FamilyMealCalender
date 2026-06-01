@@ -5,7 +5,7 @@
   transform: translateX(-50%) translateY(-12px) scale(0.96);
   background: var(--br);
   color: #fff;
-  padding: 10px 20px;
+  padding: 10px 16px 10px 20px;
   border-radius: var(--r-pill);
   font-size: 13px;
   font-weight: 500;
@@ -15,9 +15,33 @@
   pointer-events: none;
   white-space: nowrap;
   z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .show {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.interactive {
+  pointer-events: auto;
+}
+
+.undoBtn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: background 0.15s;
+}
+
+.undoBtn:hover {
+  background: rgba(255, 255, 255, 0.28);
 }

@@ -17,10 +17,11 @@ interface Props {
   recipes: Recipe[];
   onClose: () => void;
   onOpenPicker: (dayMealId: string) => void;
+  onToggleInShopping?: (added: boolean, undo: () => void) => void;
 }
 
 export default function DayModal({
-  open, dayKey, dayIdx, weekOffset, dayMeals, recipes, onClose, onOpenPicker,
+  open, dayKey, dayIdx, weekOffset, dayMeals, recipes, onClose, onOpenPicker, onToggleInShopping,
 }: Props) {
   const store = useMealStore();
   const dates = getWeekDates(weekOffset);
@@ -98,7 +99,15 @@ export default function DayModal({
                     <span className={styles.pillName}>{recipe.name}</span>
                     <button
                       className={`${styles.pillShop} ${dmr.includeInShopping ? styles.shopOn : ''}`}
-                      onClick={() => store.updateDayMealRecipe(meal.id, dmr.id, { includeInShopping: !dmr.includeInShopping })}
+                      onClick={() => {
+                        const wasIncluded = dmr.includeInShopping;
+                        const mealId = meal.id;
+                        const dmrId = dmr.id;
+                        store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: !wasIncluded });
+                        onToggleInShopping?.(!wasIncluded, () => {
+                          store.updateDayMealRecipe(mealId, dmrId, { includeInShopping: wasIncluded });
+                        });
+                      }}
                       aria-label={dmr.includeInShopping ? 'Remove from shopping list' : 'Add to shopping list'}
                       title={dmr.includeInShopping ? 'In grocery list' : 'Not in grocery list'}
                     >

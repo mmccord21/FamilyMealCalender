@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header/Header';
 import TabBar from '@/components/TabBar/TabBar';
 import WeekView from '@/components/WeekView/WeekView';
@@ -31,6 +31,8 @@ export default function MealPlannerApp({
 }: Props) {
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
+  const [toastUndo, setToastUndo] = useState<(() => void) | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [dayModalOpen, setDayModalOpen] = useState(false);
   const [editDayKey, setEditDayKey] = useState<string>('Mon');
@@ -65,9 +67,23 @@ export default function MealPlannerApp({
     });
   }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked]);
 
+  const dismissToast = () => {
+    setToastMsg('');
+    setToastUndo(null);
+  };
+
   const showToast = (msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 2500);
+    setToastUndo(null);
+    toastTimer.current = setTimeout(dismissToast, 2500);
+  };
+
+  const showToastWithUndo = (msg: string, undo: () => void) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMsg(msg);
+    setToastUndo(() => undo);
+    toastTimer.current = setTimeout(dismissToast, 4000);
   };
 
   const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring);
@@ -179,6 +195,9 @@ export default function MealPlannerApp({
           setPickerForMealId(mealId);
           setPickerOpen(true);
         }}
+        onToggleInShopping={(added, undo) => {
+          showToastWithUndo(added ? 'Added to grocery list' : 'Removed from grocery list', undo);
+        }}
       />
 
       <RecipePickerModal
@@ -235,7 +254,11 @@ export default function MealPlannerApp({
         }}
       />
 
-      <Toast visible={!!toastMsg} message={toastMsg} />
+      <Toast
+        visible={!!toastMsg}
+        message={toastMsg}
+        onUndo={toastUndo ? () => { toastUndo(); dismissToast(); } : undefined}
+      />
     </div>
   );
 }

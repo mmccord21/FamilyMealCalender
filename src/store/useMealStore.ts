@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Recipe, DayMeal, DayMealRecipe, RecurringMeal, ManualShoppingItem } from '@/types';
-import { getISOWeek } from '@/lib/helpers';
+import { getISOWeek, buildShoppingList } from '@/lib/helpers';
 
 interface MealState {
   recipes: Recipe[];
@@ -40,6 +40,31 @@ function weekFromOffset(offset: number) {
   const d = new Date();
   d.setDate(d.getDate() + offset * 7);
   return getISOWeek(d);
+}
+
+function staleCheckedKeys(
+  oldMeals: DayMeal[],
+  newMeals: DayMeal[],
+  recipes: Recipe[],
+  recurring: RecurringMeal[],
+  checkedItems: Record<string, boolean>,
+): string[] {
+  const oldList = buildShoppingList(recipes, oldMeals, recurring);
+  const newList = buildShoppingList(recipes, newMeals, recurring);
+  const newKeys = new Set(newList.map((i) => i.name.toLowerCase().trim()));
+  return oldList
+    .map((i) => i.name.toLowerCase().trim())
+    .filter((k) => !newKeys.has(k) && checkedItems[k]);
+}
+
+function clearCheckedInDB(keys: string[], weekYear: number, weekNum: number) {
+  keys.forEach((k) => {
+    fetch('/api/checked', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemKey: k, checked: false, weekYear, weekNum }),
+    }).catch(() => {});
+  });
 }
 
 export const useMealStore = create<MealState>((set, get) => ({
@@ -132,7 +157,16 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   deleteDayMeal: async (id) => {
-    set((state) => ({ dayMeals: state.dayMeals.filter((m) => m.id !== id) }));
+    const { dayMeals, recipes, recurring, checkedItems, weekOffset } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+    const newDayMeals = dayMeals.filter((m) => m.id !== id);
+
+    const stale = staleCheckedKeys(dayMeals, newDayMeals, recipes, recurring, checkedItems);
+    const newChecked = { ...checkedItems };
+    stale.forEach((k) => delete newChecked[k]);
+
+    set({ dayMeals: newDayMeals, checkedItems: newChecked });
+    clearCheckedInDB(stale, weekYear, weekNum);
     await fetch(`/api/meals/${id}`, { method: 'DELETE' });
   },
 
@@ -154,33 +188,63 @@ export const useMealStore = create<MealState>((set, get) => ({
       body: JSON.stringify({ recipeId, sortOrder }),
     });
     const saved: DayMealRecipe = await res.json();
-    set((state) => ({
-      dayMeals: state.dayMeals.map((m) =>
-        m.id === dayMealId
-          ? { ...m, recipes: m.recipes.map((r) => r.id === tempId ? saved : r) }
-          : m
-      ),
-    }));
+
+    // Check if the temp entry is still in the store (user may have removed it while in-flight)
+    const currentMeal = get().dayMeals.find((m) => m.id === dayMealId);
+    const tempStillExists = currentMeal?.recipes.some((r) => r.id === tempId);
+
+    if (tempStillExists) {
+      set((state) => ({
+        dayMeals: state.dayMeals.map((m) =>
+          m.id === dayMealId
+            ? { ...m, recipes: m.recipes.map((r) => r.id === tempId ? saved : r) }
+            : m
+        ),
+      }));
+    } else {
+      // Temp was removed while API was in-flight — clean up the saved record from DB
+      fetch(`/api/meals/${dayMealId}/recipes/${saved.id}`, { method: 'DELETE' }).catch(() => {});
+    }
+
     return saved;
   },
 
   removeRecipeFromDayMeal: async (dayMealId, dmrId) => {
-    set((state) => ({
-      dayMeals: state.dayMeals.map((m) =>
-        m.id === dayMealId ? { ...m, recipes: m.recipes.filter((r) => r.id !== dmrId) } : m
-      ),
-    }));
+    const { dayMeals, recipes, recurring, checkedItems, weekOffset } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+    const newDayMeals = dayMeals.map((m) =>
+      m.id === dayMealId ? { ...m, recipes: m.recipes.filter((r) => r.id !== dmrId) } : m
+    );
+
+    const stale = staleCheckedKeys(dayMeals, newDayMeals, recipes, recurring, checkedItems);
+    const newChecked = { ...checkedItems };
+    stale.forEach((k) => delete newChecked[k]);
+
+    set({ dayMeals: newDayMeals, checkedItems: newChecked });
+    clearCheckedInDB(stale, weekYear, weekNum);
     await fetch(`/api/meals/${dayMealId}/recipes/${dmrId}`, { method: 'DELETE' });
   },
 
   updateDayMealRecipe: async (dayMealId, dmrId, fields) => {
-    set((state) => ({
-      dayMeals: state.dayMeals.map((m) =>
-        m.id === dayMealId
-          ? { ...m, recipes: m.recipes.map((r) => r.id === dmrId ? { ...r, ...fields } : r) }
-          : m
-      ),
-    }));
+    const { dayMeals, recipes, recurring, checkedItems, weekOffset } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+    const newDayMeals = dayMeals.map((m) =>
+      m.id === dayMealId
+        ? { ...m, recipes: m.recipes.map((r) => r.id === dmrId ? { ...r, ...fields } : r) }
+        : m
+    );
+
+    let newChecked = checkedItems;
+    if (fields.includeInShopping === false) {
+      const stale = staleCheckedKeys(dayMeals, newDayMeals, recipes, recurring, checkedItems);
+      if (stale.length > 0) {
+        newChecked = { ...checkedItems };
+        stale.forEach((k) => delete newChecked[k]);
+        clearCheckedInDB(stale, weekYear, weekNum);
+      }
+    }
+
+    set({ dayMeals: newDayMeals, checkedItems: newChecked });
     await fetch(`/api/meals/${dayMealId}/recipes/${dmrId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -212,14 +276,28 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   deleteRecipe: async (id) => {
-    set((state) => ({
-      recipes: state.recipes.filter((r) => r.id !== id),
-      dayMeals: state.dayMeals.map((m) => ({
-        ...m,
-        recipes: m.recipes.filter((r) => r.recipeId !== id),
-      })),
-      recurring: state.recurring.map((r) => r.recipeId === id ? { ...r, recipeId: null } : r),
+    const { recipes, dayMeals, recurring, checkedItems, weekOffset } = get();
+    const { weekYear, weekNum } = weekFromOffset(weekOffset);
+
+    const newRecipes = recipes.filter((r) => r.id !== id);
+    const newDayMeals = dayMeals.map((m) => ({
+      ...m,
+      recipes: m.recipes.filter((r) => r.recipeId !== id),
     }));
+    const newRecurring = recurring.map((r) => r.recipeId === id ? { ...r, recipeId: null } : r);
+
+    const oldList = buildShoppingList(recipes, dayMeals, recurring);
+    const newList = buildShoppingList(newRecipes, newDayMeals, newRecurring);
+    const newKeys = new Set(newList.map((i) => i.name.toLowerCase().trim()));
+    const stale = oldList
+      .map((i) => i.name.toLowerCase().trim())
+      .filter((k) => !newKeys.has(k) && checkedItems[k]);
+
+    const newChecked = { ...checkedItems };
+    stale.forEach((k) => delete newChecked[k]);
+
+    set({ recipes: newRecipes, dayMeals: newDayMeals, recurring: newRecurring, checkedItems: newChecked });
+    clearCheckedInDB(stale, weekYear, weekNum);
     await fetch(`/api/recipes/${id}`, { method: 'DELETE' });
   },
 

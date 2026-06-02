@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarDays, BookOpen, ShoppingCart } from 'lucide-react';
+import { haptic } from '@/lib/haptic';
 import styles from './BottomNav.module.css';
 
 type Tab = 'plan' | 'recipes' | 'shop';
@@ -24,7 +25,7 @@ export default function BottomNav({ active, onChange }: Props) {
           key={id}
           id={`nb-${id}`}
           className={`${styles.btn} ${active === id ? styles.on : ''}`}
-          onClick={() => onChange(id)}
+          onClick={() => { haptic('select'); onChange(id); }}
         >
           <span className={styles.icon}>
             <Icon size={22} strokeWidth={2} />

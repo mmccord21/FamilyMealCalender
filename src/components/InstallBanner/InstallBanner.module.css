@@ -1,0 +1,88 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--sur);
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+}
+
+.iconWrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--br);
+}
+
+.icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--br);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--mu);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.inlineIcon {
+  display: inline-block;
+  vertical-align: middle;
+  color: var(--terra);
+}
+
+.installBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--mu);
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0;
+}

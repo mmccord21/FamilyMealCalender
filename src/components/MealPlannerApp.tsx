@@ -12,6 +12,7 @@ import RecipeEditorModal from '@/components/RecipeEditorModal/RecipeEditorModal'
 import RecipeViewerModal from '@/components/RecipeViewerModal/RecipeViewerModal';
 import PriceModal from '@/components/PriceModal/PriceModal';
 import Toast from '@/components/Toast/Toast';
+import InstallBanner from '@/components/InstallBanner/InstallBanner';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
@@ -99,11 +100,13 @@ export default function MealPlannerApp({
 
   return (
     <div className="app">
+      <InstallBanner />
       <Header total={estTotal} />
       <TabBar active={store.activeTab} onChange={store.setActiveTab} />
 
       <div className="scroll">
-        <div style={{ display: store.activeTab === 'plan' ? 'block' : 'none' }}>
+        {store.activeTab === 'plan' && (
+        <div className="tabPane">
           <WeekView
             recipes={store.recipes}
             dayMeals={store.dayMeals}
@@ -150,8 +153,10 @@ export default function MealPlannerApp({
             onDeleteTemplate={(id) => store.deleteTemplate(id)}
           />
         </div>
+        )}
 
-        <div style={{ display: store.activeTab === 'recipes' ? 'block' : 'none' }}>
+        {store.activeTab === 'recipes' && (
+        <div className="tabPane">
           <RecipesView
             recipes={store.recipes}
             prices={store.prices}
@@ -167,8 +172,10 @@ export default function MealPlannerApp({
             }}
           />
         </div>
+        )}
 
-        <div style={{ display: store.activeTab === 'shop' ? 'block' : 'none' }}>
+        {store.activeTab === 'shop' && (
+        <div className="tabPane">
           <ShopView
             shoppingList={shoppingList}
             checkedItems={store.checkedItems}
@@ -195,6 +202,7 @@ export default function MealPlannerApp({
             onDeleteStore={store.deleteStore}
           />
         </div>
+        )}
       </div>
 
       <RecipeViewerModal

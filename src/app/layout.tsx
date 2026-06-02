@@ -11,12 +11,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Weekly Meal Planner",
-  description: "Plan your weekly meals, manage recipes, and build your shopping list.",
+  title: "Family Meal Planner",
+  description: "Plan your family's weekly meals, manage recipes, and build your shopping list.",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Meal Planner",
+    title: "Meal Plan",
+    startupImage: [
+      { url: "/icon.svg" },
+    ],
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
@@ -32,23 +40,11 @@ export default function RootLayout({
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
-          {/* Simple inline PWA manifest hack from the original app */}
-          <link
-            rel="manifest"
-            href={"data:application/json," + encodeURIComponent(JSON.stringify({
-              name: 'Weekly Meal Planner',
-              short_name: 'Meal Plan',
-              start_url: '.',
-              display: 'standalone',
-              background_color: '#FDF8F0',
-              theme_color: '#2C1810',
-              icons: [{
-                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232C1810'/><text y='.9em' font-size='72' x='12'>🥗</text></svg>",
-                sizes: 'any',
-                type: 'image/svg+xml'
-              }]
-            }))}
-          />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Meal Plan" />
+          <link rel="apple-touch-icon" href="/icon.svg" />
         </head>
         <body>
           {children}

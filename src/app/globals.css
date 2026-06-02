@@ -39,10 +39,64 @@
 }
 
 /* ── RESET ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); }
-body { font-family: 'DM Sans', sans-serif; color: var(--br); }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  /* Prevent rubber-band overscroll — critical for native feel */
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--br);
+  /* Prevent text selection on accidental long-press */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Fix iOS input zoom — inputs must be ≥ 16px or iOS Safari zooms in */
+input, textarea, select {
+  font-size: max(16px, 1rem);
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* All interactive elements: no double-tap zoom delay, consistent cursor */
+button, a, [role="button"], label {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Press feedback on all buttons — feels native */
+button:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease;
+}
 
 /* ── APP SHELL ── */
 .app { height: 100dvh; display: flex; flex-direction: column; }
-.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Contain overscroll within this element — no page scroll bleed */
+  overscroll-behavior-y: contain;
+}
+
+/* ── TAB CONTENT TRANSITIONS ── */
+@keyframes tabFadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tabPane {
+  animation: tabFadeUp 180ms var(--ease) both;
+}

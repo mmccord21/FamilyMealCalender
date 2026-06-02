@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarDays, BookOpen, ShoppingCart } from 'lucide-react';
+import { haptic } from '@/lib/haptic';
 import styles from './TabBar.module.css';
 
 type Tab = 'plan' | 'recipes' | 'shop';
@@ -24,7 +25,7 @@ export default function TabBar({ active, onChange }: Props) {
           key={id}
           id={`tb-${id}`}
           className={`${styles.tab} ${active === id ? styles.on : ''}`}
-          onClick={() => onChange(id)}
+          onClick={() => { haptic('select'); onChange(id); }}
         >
           <Icon size={16} strokeWidth={2} />
           <span>{label}</span>

@@ -1,0 +1,43 @@
+{
+  "name": "Family Meal Planner",
+  "short_name": "Meal Plan",
+  "description": "Plan your family's weekly meals, manage recipes, and build your shopping list.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#2C1810",
+  "theme_color": "#2C1810",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "This Week",
+      "short_name": "Week",
+      "url": "/?tab=plan&source=shortcut",
+      "description": "View this week's meal plan",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Shopping List",
+      "short_name": "Shop",
+      "url": "/?tab=shop&source=shortcut",
+      "description": "Open your shopping list",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "categories": ["food", "lifestyle", "productivity"],
+  "lang": "en-US"
+}

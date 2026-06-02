@@ -42,7 +42,7 @@ export default function ShopView({
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
-  const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store === storeF);
+  const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store?.toLowerCase() === storeF.toLowerCase());
   const visible = storeFiltered.filter((i) => !hiddenItems[i.name.toLowerCase().trim()]);
   const hiddenCount = shoppingList.filter((i) => hiddenItems[i.name.toLowerCase().trim()]).length;
   const checkedCount = visible.filter((i) => checkedItems[i.name.toLowerCase().trim()]).length

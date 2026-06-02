@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           qty: Number(ing.qty) || 0,
           unit: ing.unit || '',
           cat: ing.cat || 'pantry',
-          store: ing.store || 'sprouts',
+          store: ing.store || '',
           noScale: !!ing.noScale,
         })),
       });

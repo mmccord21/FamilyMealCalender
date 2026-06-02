@@ -1,10 +1,10 @@
 'use client';
 
-import { CalendarDays, BookOpen, ShoppingCart } from 'lucide-react';
+import { CalendarDays, BookOpen, ShoppingCart, Package } from 'lucide-react';
 import { haptic } from '@/lib/haptic';
 import styles from './TabBar.module.css';
 
-type Tab = 'plan' | 'recipes' | 'shop';
+type Tab = 'plan' | 'recipes' | 'shop' | 'pantry';
 
 interface Props {
   active: Tab;
@@ -15,6 +15,7 @@ const TABS: { id: Tab; label: string; Icon: typeof CalendarDays }[] = [
   { id: 'plan',    label: 'Week',     Icon: CalendarDays },
   { id: 'recipes', label: 'Recipes',  Icon: BookOpen },
   { id: 'shop',    label: 'Shopping', Icon: ShoppingCart },
+  { id: 'pantry',  label: 'Pantry',   Icon: Package },
 ];
 
 export default function TabBar({ active, onChange }: Props) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ShoppingCart, ShoppingBag, Copy, Check, CalendarDays, Plus, X, Settings2 } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Copy, Check, CalendarDays, Plus, X, Settings2, Sparkles, Info } from 'lucide-react';
 import type { ShoppingItem, ManualShoppingItem, UserStore } from '@/types';
 import { CATS, fmtShopAmt } from '@/lib/helpers';
 import styles from './ShopView.module.css';
@@ -11,6 +11,7 @@ interface Props {
   checkedItems: Record<string, boolean>;
   hiddenItems: Record<string, boolean>;
   prices: Record<string, number>;
+  estimatedPrices: Record<string, boolean>;
   qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
   stores: UserStore[];
@@ -25,14 +26,15 @@ interface Props {
   onRestoreHidden: () => void;
   onAddStore: (name: string) => void;
   onDeleteStore: (id: string) => void;
+  onEstimatePrices: () => Promise<void>;
 }
 
 export default function ShopView({
-  shoppingList, checkedItems, hiddenItems, prices, qtyOverrides, manualItems, stores = [],
+  shoppingList, checkedItems, hiddenItems, prices, estimatedPrices, qtyOverrides, manualItems, stores = [],
   onToggleCheck, onResetChecked, onOpenPrice, onCopy,
   onAddManualItem, onDeleteManualItem, onSetQtyOverride,
   onHideItem, onRestoreHidden,
-  onAddStore, onDeleteStore,
+  onAddStore, onDeleteStore, onEstimatePrices,
 }: Props) {
   const [storeF, setStoreF] = useState<string>('all');
   const [showStoreManager, setShowStoreManager] = useState(false);
@@ -40,6 +42,7 @@ export default function ShopView({
   const [newItem, setNewItem] = useState('');
   const [editingQty, setEditingQty] = useState<string | null>(null);
   const [qtyDraft, setQtyDraft] = useState('');
+  const [estimating, setEstimating] = useState(false);
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
   const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store?.toLowerCase() === storeF.toLowerCase());
@@ -50,11 +53,18 @@ export default function ShopView({
   const totalCount = visible.length + manualItems.length;
 
   const total = visible.reduce((s, item) => s + (prices[item.name.toLowerCase().trim()] || 0), 0);
+  const hasUnpriced = visible.some((i) => !prices[i.name.toLowerCase().trim()]);
+  const hasEstimates = visible.some((i) => estimatedPrices[i.name.toLowerCase().trim()]);
 
   const commitQty = (mk: string) => {
     const n = parseFloat(qtyDraft);
     if (!isNaN(n) && n > 0) onSetQtyOverride(mk, n);
     setEditingQty(null);
+  };
+
+  const handleEstimate = async () => {
+    setEstimating(true);
+    try { await onEstimatePrices(); } finally { setEstimating(false); }
   };
 
   const handleAdd = () => {
@@ -144,10 +154,28 @@ export default function ShopView({
           </button>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
+          {(hasUnpriced || hasEstimates) && (
+            <button
+              className={`${styles.btnSm} ${styles.btnE}`}
+              onClick={handleEstimate}
+              disabled={estimating}
+              aria-label="Estimate prices with AI"
+            >
+              <Sparkles size={13} strokeWidth={2} />
+              {estimating ? 'Estimating…' : 'Estimate $'}
+            </button>
+          )}
           <button className={`${styles.btnSm} ${styles.btnC}`} onClick={handleCopy}><Copy size={13} strokeWidth={2} /> Copy</button>
           <button className={`${styles.btnSm} ${styles.btnR}`} onClick={onResetChecked}>Reset</button>
         </div>
       </div>
+
+      {hasEstimates && (
+        <div className={styles.estimateBar}>
+          <Info size={13} strokeWidth={2} className={styles.estimateBarIcon} />
+          <span>AI price estimates — tap any <strong>~$</strong> to update</span>
+        </div>
+      )}
 
       {hiddenCount > 0 && (
         <div className={styles.hiddenBar}>
@@ -238,10 +266,10 @@ export default function ShopView({
                       </div>
                       <div className={styles.iRight}>
                         <span
-                          className={`${styles.priceBadge} ${p ? styles.priceSet : styles.priceNone}`}
+                          className={`${styles.priceBadge} ${p ? (estimatedPrices[mk] ? styles.priceEst : styles.priceSet) : styles.priceNone}`}
                           onClick={(e) => { e.stopPropagation(); onOpenPrice(mk, item.name, fmtShopAmt(item)); }}
                         >
-                          {p ? `$${p}` : 'set $'}
+                          {p ? (estimatedPrices[mk] ? `~$${p}` : `$${p}`) : 'set $'}
                         </span>
                         <button
                           className={styles.hideBtn}

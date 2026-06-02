@@ -52,7 +52,17 @@ export interface DayMeal {
   sortOrder: number;
   guests?: number | null;
   note?: string | null;
+  cookedAt?: string | null;
   recipes: DayMealRecipe[];
+}
+
+export interface PantryItem {
+  id: string;
+  name: string;
+  qty: number;
+  unit: string;
+  lowStockQty?: number | null;
+  updatedAt: string;
 }
 
 export interface RecurringMeal {

@@ -1,4 +1,4 @@
-import type { DayKey, DayMeal, Ingredient, IngredientCat, Recipe, ShoppingItem } from '@/types';
+import type { DayKey, DayMeal, Ingredient, IngredientCat, PantryItem, Recipe, ShoppingItem } from '@/types';
 
 export const EMOJIS = ['🍳','🥗','🐟','🍗','🍔','🥩','🦐','🥘','🫕','🍝','🌮','🥙','🥑','🍣','🥚','🫔','🧆','🍲','🥣','🥦','🦀','🐙','🫶','🍱','🥞','🧇','🫙','🍜','🫚','🍵'];
 
@@ -88,6 +88,7 @@ export function buildShoppingList(
   recipes: Recipe[],
   dayMeals: DayMeal[],
   recurring: { key: string; recipeId?: string | null }[],
+  pantryItems: PantryItem[] = [],
 ): ShoppingItem[] {
   const merged: Record<string, ShoppingItem> = {};
   let counter = 0;
@@ -133,7 +134,22 @@ export function buildShoppingList(
     addIngs(recipe.ingredients, r.key, 1);
   });
 
-  return Object.values(merged);
+  if (pantryItems.length === 0) return Object.values(merged);
+
+  const pantryMap = new Map(pantryItems.map((p) => [p.name, p]));
+  const result: ShoppingItem[] = [];
+  for (const item of Object.values(merged)) {
+    const key = item.name.toLowerCase().trim();
+    const pantry = pantryMap.get(key);
+    if (!pantry || pantry.unit !== item.unit) {
+      result.push(item);
+      continue;
+    }
+    const needed = item.totalQty - pantry.qty;
+    if (needed <= 0) continue;
+    result.push({ ...item, totalQty: needed });
+  }
+  return result;
 }
 
 export function calcTotal(

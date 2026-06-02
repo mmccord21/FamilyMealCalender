@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, ChevronRight as Caret, Copy, LayoutTemplate, Pencil, Plus, Trash2, UtensilsCrossed, X } from 'lucide-react';
+import { CheckCircle, ChevronLeft, ChevronRight, ChevronRight as Caret, Copy, LayoutTemplate, Pencil, Plus, Trash2, UtensilsCrossed, X } from 'lucide-react';
 import type { Recipe, DayMeal, RecurringMeal, WeekTemplate } from '@/types';
 import { DAY_KEYS, recColor, getWeekDates, getISOWeek, isToday } from '@/lib/helpers';
 import styles from './WeekView.module.css';
@@ -24,6 +24,7 @@ interface Props {
   onSaveTemplate: (name: string) => void;
   onApplyTemplate: (id: string) => void;
   onDeleteTemplate: (id: string) => void;
+  onMarkCooked: (dayMealId: string) => void;
 }
 
 const DAY_ABBR: Record<string, string> = {
@@ -34,7 +35,7 @@ export default function WeekView({
   recipes, dayMeals, recurring, weekOffset, loading = false, templates,
   onShiftWeek, onOpenDay, onViewRecipe, onOpenRecurring, onCopyWeek,
   onAddRecurring, onDeleteRecurring, onRenameRecurring,
-  onSaveTemplate, onApplyTemplate, onDeleteTemplate,
+  onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked,
 }: Props) {
   const [showCopyMenu, setShowCopyMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -290,7 +291,18 @@ export default function WeekView({
                           .filter((r): r is Recipe => !!r);
                         return (
                           <div key={meal.id} className={styles.slotRow}>
-                            <span className={styles.slotLabel}>{meal.name}</span>
+                            <div className={styles.slotHeader}>
+                              <span className={styles.slotLabel}>{meal.name}</span>
+                              {mealRecipes.length > 0 && (
+                                <button
+                                  className={`${styles.slotCooked} ${meal.cookedAt ? styles.slotCookedDone : ''}`}
+                                  aria-label={meal.cookedAt ? 'Cooked' : 'Mark as cooked'}
+                                  onClick={(e) => { e.stopPropagation(); if (!meal.cookedAt) onMarkCooked(meal.id); }}
+                                >
+                                  <CheckCircle size={14} strokeWidth={2} />
+                                </button>
+                              )}
+                            </div>
                             <div className={styles.slotChips}>
                               {mealRecipes.map((r) => (
                                 <span

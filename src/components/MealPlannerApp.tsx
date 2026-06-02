@@ -6,6 +6,7 @@ import TabBar from '@/components/TabBar/TabBar';
 import WeekView from '@/components/WeekView/WeekView';
 import RecipesView from '@/components/RecipesView/RecipesView';
 import ShopView from '@/components/ShopView/ShopView';
+import PantryView from '@/components/PantryView/PantryView';
 import DayModal from '@/components/DayModal/DayModal';
 import RecipePickerModal from '@/components/RecipePickerModal/RecipePickerModal';
 import RecipeEditorModal from '@/components/RecipeEditorModal/RecipeEditorModal';
@@ -16,7 +17,7 @@ import InstallBanner from '@/components/InstallBanner/InstallBanner';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
-import type { Recipe, DayMeal, RecurringMeal, ManualShoppingItem, UserStore } from '@/types';
+import type { Recipe, DayMeal, PantryItem, RecurringMeal, ManualShoppingItem, UserStore } from '@/types';
 
 interface Props {
   initialRecipes: Recipe[];
@@ -27,10 +28,11 @@ interface Props {
   initialHidden: Record<string, boolean>;
   initialManualItems: ManualShoppingItem[];
   initialStores: UserStore[];
+  initialPantryItems: PantryItem[];
 }
 
 export default function MealPlannerApp({
-  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialHidden, initialManualItems, initialStores
+  initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialHidden, initialManualItems, initialStores, initialPantryItems
 }: Props) {
   const store = useMealStore();
   const [toastMsg, setToastMsg] = useState('');
@@ -69,12 +71,13 @@ export default function MealPlannerApp({
       hiddenItems: initialHidden,
       manualItems: initialManualItems,
       stores: initialStores,
+      pantryItems: initialPantryItems,
     });
     if (initialStores.length === 0) {
       useMealStore.getState().fetchStores();
     }
     useMealStore.getState().fetchTemplates();
-  }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialStores]);
+  }, [initialRecipes, initialWeek, initialRecurring, initialPrices, initialChecked, initialStores, initialPantryItems]);
 
   const dismissToast = () => {
     setToastMsg('');
@@ -91,7 +94,7 @@ export default function MealPlannerApp({
     toastTimer.current = setTimeout(dismissToast, action ? 5500 : 2500);
   };
 
-  const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring);
+  const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring, store.pantryItems);
   const estTotal = calcTotal(shoppingList, store.prices);
 
   const handleCopyList = (txt: string) => {
@@ -151,6 +154,10 @@ export default function MealPlannerApp({
               showToast('Template applied');
             }}
             onDeleteTemplate={(id) => store.deleteTemplate(id)}
+            onMarkCooked={async (dayMealId) => {
+              await store.markMealCooked(dayMealId);
+              showToast('Meal cooked ✓ Pantry updated');
+            }}
           />
         </div>
         )}
@@ -174,6 +181,18 @@ export default function MealPlannerApp({
         </div>
         )}
 
+        {store.activeTab === 'pantry' && (
+        <div className="tabPane">
+          <PantryView
+            pantryItems={store.pantryItems}
+            recipes={store.recipes}
+            onAddItem={(name, qty, unit) => store.addToPantry(name, qty, unit)}
+            onUpdateQty={(name, qty, unit) => store.updatePantryQty(name, qty, unit)}
+            onRemoveItem={(name) => store.removePantryItem(name)}
+          />
+        </div>
+        )}
+
         {store.activeTab === 'shop' && (
         <div className="tabPane">
           <ShopView
@@ -181,6 +200,7 @@ export default function MealPlannerApp({
             checkedItems={store.checkedItems}
             hiddenItems={store.hiddenItems}
             prices={store.prices}
+            estimatedPrices={store.estimatedPrices}
             qtyOverrides={store.qtyOverrides}
             manualItems={store.manualItems}
             stores={store.stores}
@@ -200,6 +220,7 @@ export default function MealPlannerApp({
             onRestoreHidden={store.restoreHiddenItems}
             onAddStore={store.addStore}
             onDeleteStore={store.deleteStore}
+            onEstimatePrices={() => store.estimatePrices(shoppingList)}
           />
         </div>
         )}
@@ -302,6 +323,7 @@ export default function MealPlannerApp({
         name={priceItemName}
         amt={priceItemAmt}
         currentPrice={store.prices[priceItemKey] || 0}
+        isEstimated={!!store.estimatedPrices[priceItemKey]}
         onClose={() => setPriceModalOpen(false)}
         onSave={(key, p) => {
           store.savePrice(key, p);

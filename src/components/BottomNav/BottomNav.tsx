@@ -1,10 +1,10 @@
 'use client';
 
-import { CalendarDays, BookOpen, ShoppingCart } from 'lucide-react';
+import { CalendarDays, BookOpen, ShoppingCart, Package } from 'lucide-react';
 import { haptic } from '@/lib/haptic';
 import styles from './BottomNav.module.css';
 
-type Tab = 'plan' | 'recipes' | 'shop';
+type Tab = 'plan' | 'recipes' | 'shop' | 'pantry';
 
 interface Props {
   active: Tab;
@@ -15,6 +15,7 @@ const ITEMS: { id: Tab; Icon: typeof CalendarDays; label: string }[] = [
   { id: 'plan',    Icon: CalendarDays,  label: 'Week' },
   { id: 'recipes', Icon: BookOpen,      label: 'Recipes' },
   { id: 'shop',    Icon: ShoppingCart,  label: 'Shopping' },
+  { id: 'pantry',  Icon: Package,       label: 'Pantry' },
 ];
 
 export default function BottomNav({ active, onChange }: Props) {

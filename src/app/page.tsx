@@ -20,11 +20,12 @@ export default async function Home() {
         initialHidden={{}}
         initialManualItems={[]}
         initialStores={[]}
+        initialPantryItems={[]}
       />
     );
   }
 
-  const [recipes, dayMeals, recurring, prices, checks, hiddenRows, manualItems, userStores] = await Promise.all([
+  const [recipes, dayMeals, recurring, prices, checks, hiddenRows, manualItems, userStores, pantryItems] = await Promise.all([
     prisma.recipe.findMany({ where: { userId }, include: { ingredients: true }, orderBy: { createdAt: 'asc' } }),
     prisma.dayMeal.findMany({
       where: { userId, weekYear, weekNum },
@@ -37,6 +38,7 @@ export default async function Home() {
     prisma.shoppingHiddenItem.findMany({ where: { userId, weekYear, weekNum } }),
     prisma.manualShoppingItem.findMany({ where: { userId, weekYear, weekNum } }),
     prisma.userStore.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
+    prisma.pantryItem.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
   ]);
 
   const pricesObj: Record<string, number> = {};
@@ -58,6 +60,7 @@ export default async function Home() {
       initialHidden={hiddenObj}
       initialManualItems={manualItems}
       initialStores={userStores}
+      initialPantryItems={pantryItems as any}
     />
   );
 }

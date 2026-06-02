@@ -617,6 +617,31 @@
   font-style: italic;
 }
 
+.slotHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slotCooked {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bdr);
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  padding: 0;
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.slotCooked:hover { color: var(--sage); }
+.slotCooked:active { transform: scale(0.88); }
+.slotCookedDone { color: var(--sage); cursor: default; }
+
 /* ── Copy Week ── */
 .copyWrap {
   position: relative;

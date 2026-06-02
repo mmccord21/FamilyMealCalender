@@ -10,11 +10,12 @@ interface Props {
   name: string;
   amt: string;
   currentPrice: number;
+  isEstimated?: boolean;
   onClose: () => void;
   onSave: (itemKey: string, price: number) => void;
 }
 
-export default function PriceModal({ open, itemKey, name, amt, currentPrice, onClose, onSave }: Props) {
+export default function PriceModal({ open, itemKey, name, amt, currentPrice, isEstimated, onClose, onSave }: Props) {
   const [val, setVal] = useState('');
 
   useEffect(() => {
@@ -40,7 +41,9 @@ export default function PriceModal({ open, itemKey, name, amt, currentPrice, onC
       </div>
       
       <div className={styles.helpTxt}>
-        Enter what you paid at Sprouts or Costco for the amount shown. Saves automatically for future weeks.
+        {isEstimated
+          ? 'AI estimate — may not match your store. Update it with what you actually pay and it saves for future weeks.'
+          : 'Enter what you paid at the store for the amount shown. Saves automatically for future weeks.'}
       </div>
       
       <div className={styles.actions}>

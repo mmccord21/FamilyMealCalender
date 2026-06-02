@@ -1,25 +1,32 @@
 import { create } from 'zustand';
-import type { Recipe, DayMeal, DayMealRecipe, RecurringMeal, ManualShoppingItem, UserStore, WeekTemplate } from '@/types';
-import { getISOWeek, buildShoppingList } from '@/lib/helpers';
+import type { Recipe, DayMeal, DayMealRecipe, PantryItem, RecurringMeal, ManualShoppingItem, UserStore, WeekTemplate, ShoppingItem } from '@/types';
+import { getISOWeek, buildShoppingList, fmtShopAmt } from '@/lib/helpers';
 
 interface MealState {
   recipes: Recipe[];
   dayMeals: DayMeal[];
   recurring: RecurringMeal[];
   prices: Record<string, number>;
+  estimatedPrices: Record<string, boolean>;
   checkedItems: Record<string, boolean>;
   hiddenItems: Record<string, boolean>;
   qtyOverrides: Record<string, number>;
   manualItems: ManualShoppingItem[];
   stores: UserStore[];
   templates: WeekTemplate[];
+  pantryItems: PantryItem[];
 
   weekOffset: number;
   weekLoading: boolean;
-  activeTab: 'plan' | 'recipes' | 'shop';
+  activeTab: 'plan' | 'recipes' | 'shop' | 'pantry';
 
   setInitialData: (data: Partial<MealState>) => void;
-  setActiveTab: (tab: 'plan' | 'recipes' | 'shop') => void;
+  setActiveTab: (tab: 'plan' | 'recipes' | 'shop' | 'pantry') => void;
+  fetchPantry: () => Promise<void>;
+  addToPantry: (name: string, qty: number, unit: string) => Promise<void>;
+  updatePantryQty: (name: string, qty: number, unit: string) => Promise<void>;
+  removePantryItem: (name: string) => Promise<void>;
+  markMealCooked: (dayMealId: string) => Promise<void>;
   setWeekOffset: (delta: number) => void;
   fetchStores: () => Promise<void>;
   addStore: (name: string) => Promise<void>;
@@ -45,6 +52,7 @@ interface MealState {
   saveRecipe: (recipe: Partial<Recipe>) => Promise<void>;
   deleteRecipe: (id: string) => Promise<() => void>;
   savePrice: (itemKey: string, price: number) => Promise<void>;
+  estimatePrices: (items: ShoppingItem[]) => Promise<void>;
   toggleCheck: (itemKey: string, checked: boolean) => Promise<void>;
   resetChecked: () => Promise<void>;
   addManualItem: (name: string) => Promise<void>;
@@ -90,12 +98,14 @@ export const useMealStore = create<MealState>((set, get) => ({
   dayMeals: [],
   recurring: [],
   prices: {},
+  estimatedPrices: {},
   checkedItems: {},
   hiddenItems: {},
   qtyOverrides: {},
   manualItems: [],
   stores: [],
   templates: [],
+  pantryItems: [],
 
   weekOffset: 0,
   weekLoading: false,
@@ -103,6 +113,68 @@ export const useMealStore = create<MealState>((set, get) => ({
 
   setInitialData: (data) => set((state) => ({ ...state, ...data, manualItems: data.manualItems ?? state.manualItems })),
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  fetchPantry: async () => {
+    const res = await fetch('/api/pantry');
+    if (!res.ok) return;
+    const items: PantryItem[] = await res.json();
+    set({ pantryItems: items });
+  },
+
+  addToPantry: async (name, qty, unit) => {
+    const key = name.toLowerCase().trim();
+    set((state) => {
+      const existing = state.pantryItems.find((p) => p.name === key);
+      if (existing) {
+        return { pantryItems: state.pantryItems.map((p) => p.name === key ? { ...p, qty: p.unit === unit ? p.qty + qty : qty, unit } : p) };
+      }
+      const optimistic: PantryItem = { id: `temp-${Date.now()}`, name: key, qty, unit, updatedAt: new Date().toISOString() };
+      return { pantryItems: [...state.pantryItems, optimistic] };
+    });
+    const res = await fetch('/api/pantry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: key, qty, unit }),
+    });
+    if (res.ok) {
+      const saved: PantryItem = await res.json();
+      set((state) => ({ pantryItems: state.pantryItems.map((p) => p.name === key ? saved : p) }));
+    }
+  },
+
+  updatePantryQty: async (name, qty, unit) => {
+    const key = name.toLowerCase().trim();
+    set((state) => ({ pantryItems: state.pantryItems.map((p) => p.name === key ? { ...p, qty, unit } : p) }));
+    fetch('/api/pantry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: key, qty, unit }),
+    }).catch(() => {});
+  },
+
+  removePantryItem: async (name) => {
+    const key = name.toLowerCase().trim();
+    set((state) => ({ pantryItems: state.pantryItems.filter((p) => p.name !== key) }));
+    fetch(`/api/pantry?name=${encodeURIComponent(key)}`, { method: 'DELETE' }).catch(() => {});
+  },
+
+  markMealCooked: async (dayMealId) => {
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) => m.id === dayMealId ? { ...m, cookedAt: new Date().toISOString() } : m),
+    }));
+    const res = await fetch('/api/pantry/deduct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dayMealId }),
+    });
+    if (res.ok) {
+      const { meal, pantryItems } = await res.json();
+      set((state) => ({
+        dayMeals: state.dayMeals.map((m) => m.id === dayMealId ? meal : m),
+        pantryItems,
+      }));
+    }
+  },
 
   setWeekOffset: (delta) => {
     set((state) => ({ weekOffset: state.weekOffset + delta }));
@@ -459,14 +531,54 @@ export const useMealStore = create<MealState>((set, get) => ({
   },
 
   savePrice: async (itemKey, price) => {
-    set((state) => ({ prices: { ...state.prices, [itemKey]: price } }));
+    set((state) => {
+      const newEstimated = { ...state.estimatedPrices };
+      delete newEstimated[itemKey];
+      return { prices: { ...state.prices, [itemKey]: price }, estimatedPrices: newEstimated };
+    });
     await fetch('/api/prices', { method: 'PUT', body: JSON.stringify({ name: itemKey, price }) });
+  },
+
+  estimatePrices: async (items) => {
+    const { prices } = get();
+    const toEstimate = items
+      .filter((i) => !prices[i.name.toLowerCase().trim()])
+      .map((i) => ({ name: i.name.toLowerCase().trim(), amount: fmtShopAmt(i) }));
+    if (!toEstimate.length) return;
+
+    const res = await fetch('/api/estimate-prices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: toEstimate }),
+    });
+    if (!res.ok) throw new Error('Failed to estimate prices');
+    const { prices: estimated } = await res.json() as { prices: Record<string, number> };
+
+    set((state) => ({
+      prices: { ...state.prices, ...estimated },
+      estimatedPrices: {
+        ...state.estimatedPrices,
+        ...Object.fromEntries(Object.keys(estimated).map((k) => [k, true])),
+      },
+    }));
+
+    Object.entries(estimated).forEach(([name, price]) => {
+      fetch('/api/prices', { method: 'PUT', body: JSON.stringify({ name, price }) }).catch(() => {});
+    });
   },
 
   toggleCheck: async (itemKey, checked) => {
     const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
     set((state) => ({ checkedItems: { ...state.checkedItems, [itemKey]: checked } }));
     await fetch('/api/checked', { method: 'PUT', body: JSON.stringify({ itemKey, checked, weekYear, weekNum }) });
+    if (checked) {
+      const { recipes, dayMeals, recurring } = get();
+      const list = buildShoppingList(recipes, dayMeals, recurring);
+      const item = list.find((i) => i.name.toLowerCase().trim() === itemKey);
+      if (item && item.totalQty > 0 && item.unit) {
+        get().addToPantry(item.name, item.totalQty, item.unit ?? '');
+      }
+    }
   },
 
   resetChecked: async () => {

@@ -18,6 +18,8 @@
 .btnSm:active { transform: scale(0.96); }
 .btnC { color: var(--sage); border-color: var(--sage); }
 .btnR { color: var(--mu); border-color: var(--bdr); }
+.btnE { color: var(--gold); border-color: var(--gold); }
+.btnE:disabled { opacity: 0.55; cursor: default; }
 
 .catSec { margin-bottom: 24px; }
 .catHdr { display: flex; align-items: center; gap: 7px; padding-bottom: 9px; margin-bottom: 2px; border-bottom: 2px solid; }
@@ -76,7 +78,12 @@
 .priceBadge { font-size: 13px; color: var(--mu); background: #f5efe8; border-radius: 6px; padding: 3px 8px; cursor: pointer; border: 1px solid transparent; display: block; }
 .priceBadge:active { border-color: var(--terra); }
 .priceSet { color: var(--terra); font-weight: 600; }
+.priceEst { color: var(--gold); font-weight: 600; border: 1px dashed var(--gold); background: #fdf8f2; }
 .priceNone { color: #ccc; }
+
+.estimateBar { display: flex; align-items: center; gap: 7px; background: #fdf8f2; border: 1px dashed var(--gold); border-radius: var(--r-sm); padding: 8px 12px; margin-bottom: 13px; font-size: 12.5px; color: var(--gold); }
+.estimateBar strong { font-weight: 700; }
+.estimateBarIcon { flex-shrink: 0; }
 .hideBtn { width: 26px; height: 26px; border-radius: 6px; border: none; background: none; color: #d4c4b4; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
 .hideBtn:active { color: var(--terra); background: #fdf0eb; }
 

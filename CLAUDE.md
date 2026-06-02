@@ -51,6 +51,7 @@
 - **Prices keyed by lowercase ingredient name.**
 - **`weekOffset`**: 0 = this week, -1 = last, +1 = next. Navigation re-fetches from API.
 - **Recurring meal slots are user-defined.** The old hardcoded brunch/lunch seed is removed; existing DB rows still work.
+- **Schema changes: use `npx prisma db push`, NOT `prisma migrate dev`.** The DB was set up without migration history — `migrate dev` will detect drift and refuse. After `db push`, always run `npx prisma generate` explicitly (push does not always regenerate the client).
 
 ---
 
@@ -239,3 +240,4 @@ Desktop: > 1024px
 | 2026-06-01 | Hidden grocery items: X button hides items for the week. `ShoppingHiddenItem` model + `/api/hidden-items`. `hideItem`/`restoreHiddenItems` in Zustand. "N hidden · Restore" bar in ShopView. |
 | 2026-06-02 | Serving size in recipe book + scale on pick. RecipesView shows "Serves X". RecipePickerModal tap-to-expand inline panel with serving stepper. `onSelect(id, servings)` → sets `meal.guests` on add. |
 | 2026-06-02 | CLAUDE.md restructured for AI consumption: Workflow Protocol, NEVER block, When Stuck table, Key Constraints moved to top, prose tightened. |
+| 2026-06-02 | Pantry feature: `PantryItem` model + `cookedAt` on `DayMeal`. `/api/pantry` (GET/POST/DELETE) + `/api/pantry/deduct` (POST). `buildShoppingList` accepts optional `pantryItems` param — skips/reduces stocked items (pure, backward-compat). `toggleCheck` auto-stocks pantry on checkoff. `markMealCooked` deducts recipe ingredients (unit-match only). New `PantryView` tab with import-from-recipes, quick add with autocomplete, inline qty editing, low-stock warnings. Cooked checkmark button on WeekView meal slots. |

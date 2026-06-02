@@ -17,7 +17,8 @@ interface Props {
   stores: UserStore[];
   onToggleCheck: (itemKey: string, checked: boolean) => void;
   onResetChecked: () => void;
-  onOpenPrice: (itemKey: string, name: string, amt: string) => void;
+  onClearChecked: () => void;
+  onOpenPrice: (itemKey: string, name: string, amt: string, qty: number, unit: string) => void;
   onCopy: (txt: string) => void;
   onAddManualItem: (name: string) => void;
   onDeleteManualItem: (id: string) => void;
@@ -31,7 +32,7 @@ interface Props {
 
 export default function ShopView({
   shoppingList, checkedItems, hiddenItems, prices, estimatedPrices, qtyOverrides, manualItems, stores = [],
-  onToggleCheck, onResetChecked, onOpenPrice, onCopy,
+  onToggleCheck, onResetChecked, onClearChecked, onOpenPrice, onCopy,
   onAddManualItem, onDeleteManualItem, onSetQtyOverride,
   onHideItem, onRestoreHidden,
   onAddStore, onDeleteStore, onEstimatePrices,
@@ -52,7 +53,13 @@ export default function ShopView({
     + manualItems.filter((i) => checkedItems[`m:${i.id}`]).length;
   const totalCount = visible.length + manualItems.length;
 
-  const total = visible.reduce((s, item) => s + (prices[item.name.toLowerCase().trim()] || 0), 0);
+  const itemCost = (mk: string, item: ShoppingItem) => {
+    const p = prices[mk] || 0;
+    if (!p) return 0;
+    const qty = qtyOverrides[mk] ?? item.totalQty;
+    return qty > 0 ? p * qty : p;
+  };
+  const total = visible.reduce((s, item) => s + itemCost(item.name.toLowerCase().trim(), item), 0);
   const hasUnpriced = visible.some((i) => !prices[i.name.toLowerCase().trim()]);
   const hasEstimates = visible.some((i) => estimatedPrices[i.name.toLowerCase().trim()]);
 
@@ -166,6 +173,9 @@ export default function ShopView({
             </button>
           )}
           <button className={`${styles.btnSm} ${styles.btnC}`} onClick={handleCopy}><Copy size={13} strokeWidth={2} /> Copy</button>
+          {checkedCount > 0 && (
+            <button className={`${styles.btnSm} ${styles.btnDel}`} onClick={onClearChecked}>Clear checked</button>
+          )}
           <button className={`${styles.btnSm} ${styles.btnR}`} onClick={onResetChecked}>Reset</button>
         </div>
       </div>
@@ -267,9 +277,13 @@ export default function ShopView({
                       <div className={styles.iRight}>
                         <span
                           className={`${styles.priceBadge} ${p ? (estimatedPrices[mk] ? styles.priceEst : styles.priceSet) : styles.priceNone}`}
-                          onClick={(e) => { e.stopPropagation(); onOpenPrice(mk, item.name, fmtShopAmt(item)); }}
+                          onClick={(e) => { e.stopPropagation(); onOpenPrice(mk, item.name, fmtShopAmt(item), qtyOverrides[mk] ?? item.totalQty, item.unit); }}
                         >
-                          {p ? (estimatedPrices[mk] ? `~$${p}` : `$${p}`) : 'set $'}
+                          {p ? (() => {
+                            const cost = itemCost(mk, item);
+                            const display = `$${cost.toFixed(2)}`;
+                            return estimatedPrices[mk] ? `~${display}` : display;
+                          })() : 'set $'}
                         </span>
                         <button
                           className={styles.hideBtn}

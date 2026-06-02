@@ -4,24 +4,25 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM = `You are a US grocery pricing assistant. Given a list of grocery ingredients with quantities, return a realistic estimated retail price in USD for each item. Use typical supermarket prices (not wholesale or premium specialty). Return prices as the total cost for the amount listed, not per-unit price.`;
-
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
 
   const body = await request.json();
-  const items: { name: string; amount: string }[] = body.items ?? [];
+  const items: { name: string; qty: number; unit: string }[] = body.items ?? [];
   if (!items.length) return NextResponse.json({ prices: {} });
 
-  const itemList = items.map((i) => `- ${i.name} (${i.amount})`).join('\n');
+  // Use indexed list so the AI can't misname items — we map back by index
+  const itemList = items.map((i, idx) => {
+    const unitLabel = i.unit ? i.unit : 'each';
+    return `${idx + 1}. ${i.name} — need: ${i.qty > 0 ? i.qty : 1} ${unitLabel}`;
+  }).join('\n');
 
-  let estimates: { name: string; price: number }[] = [];
+  let rawEstimates: { index: number; price_per_unit: number }[] = [];
   try {
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 1024,
-      system: SYSTEM,
       output_config: {
         format: {
           type: 'json_schema',
@@ -35,10 +36,10 @@ export async function POST(request: Request) {
                   type: 'object',
                   additionalProperties: false,
                   properties: {
-                    name: { type: 'string', description: 'lowercase ingredient name, matching input exactly' },
-                    price: { type: 'number', description: 'estimated USD price for the amount listed, rounded to nearest 0.25' },
+                    index: { type: 'integer', description: 'the item number from the list' },
+                    price_per_unit: { type: 'number', description: 'estimated USD price per one unit (per lb, per cup, per each, etc.) at a typical US supermarket' },
                   },
-                  required: ['name', 'price'],
+                  required: ['index', 'price_per_unit'],
                 },
               },
             },
@@ -48,22 +49,22 @@ export async function POST(request: Request) {
       },
       messages: [{
         role: 'user',
-        content: `Estimate grocery prices for these items:\n${itemList}`,
+        content: `Estimate the price PER UNIT for each grocery item below. Return price per single unit (per lb, per cup, per each, etc.) — NOT the total for the quantity listed.\n\nItems:\n${itemList}`,
       }],
     });
 
     const out = msg.content[0]?.type === 'text' ? msg.content[0].text : '{}';
-    const parsed = JSON.parse(out) as { estimates: { name: string; price: number }[] };
-    estimates = parsed.estimates ?? [];
+    const parsed = JSON.parse(out) as { estimates: { index: number; price_per_unit: number }[] };
+    rawEstimates = parsed.estimates ?? [];
   } catch {
     return NextResponse.json({ error: 'Failed to estimate prices' }, { status: 502 });
   }
 
   const prices: Record<string, number> = {};
-  estimates.forEach(({ name, price }) => {
-    const key = name.toLowerCase().trim();
-    if (key && typeof price === 'number' && price >= 0) {
-      prices[key] = Math.round(price * 100) / 100;
+  rawEstimates.forEach(({ index, price_per_unit }) => {
+    const item = items[index - 1];
+    if (item && typeof price_per_unit === 'number' && price_per_unit >= 0) {
+      prices[item.name] = Math.round(price_per_unit * 100) / 100;
     }
   });
 

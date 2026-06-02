@@ -60,6 +60,8 @@ export default function MealPlannerApp({
   const [priceItemKey, setPriceItemKey] = useState('');
   const [priceItemName, setPriceItemName] = useState('');
   const [priceItemAmt, setPriceItemAmt] = useState('');
+  const [priceItemQty, setPriceItemQty] = useState(0);
+  const [priceItemUnit, setPriceItemUnit] = useState('');
 
   useEffect(() => {
     useMealStore.getState().setInitialData({
@@ -96,6 +98,17 @@ export default function MealPlannerApp({
 
   const shoppingList = buildShoppingList(store.recipes, store.dayMeals, store.recurring, store.pantryItems);
   const estTotal = calcTotal(shoppingList, store.prices);
+
+  const handleClearChecked = async () => {
+    const { checkedItems, manualItems } = store;
+    for (const item of manualItems) {
+      if (checkedItems[`m:${item.id}`]) await store.deleteManualItem(item.id);
+    }
+    for (const key of Object.keys(checkedItems)) {
+      if (checkedItems[key] && !key.startsWith('m:')) await store.hideItem(key);
+    }
+    await store.resetChecked();
+  };
 
   const handleCopyList = (txt: string) => {
     navigator.clipboard.writeText(txt).then(() => showToast('Copied! 📋')).catch(() => showToast('Copy failed'));
@@ -206,11 +219,14 @@ export default function MealPlannerApp({
             stores={store.stores}
             onToggleCheck={store.toggleCheck}
             onResetChecked={store.resetChecked}
+            onClearChecked={handleClearChecked}
             onCopy={handleCopyList}
-            onOpenPrice={(key, name, amt) => {
+            onOpenPrice={(key, name, amt, qty, unit) => {
               setPriceItemKey(key);
               setPriceItemName(name);
               setPriceItemAmt(amt);
+              setPriceItemQty(qty);
+              setPriceItemUnit(unit);
               setPriceModalOpen(true);
             }}
             onAddManualItem={store.addManualItem}
@@ -220,7 +236,14 @@ export default function MealPlannerApp({
             onRestoreHidden={store.restoreHiddenItems}
             onAddStore={store.addStore}
             onDeleteStore={store.deleteStore}
-            onEstimatePrices={() => store.estimatePrices(shoppingList)}
+            onEstimatePrices={async () => {
+              try {
+                await store.estimatePrices(shoppingList);
+                showToast('Prices estimated ✓');
+              } catch {
+                showToast('Could not estimate prices — try again');
+              }
+            }}
           />
         </div>
         )}
@@ -322,6 +345,8 @@ export default function MealPlannerApp({
         itemKey={priceItemKey}
         name={priceItemName}
         amt={priceItemAmt}
+        qty={priceItemQty}
+        unit={priceItemUnit}
         currentPrice={store.prices[priceItemKey] || 0}
         isEstimated={!!store.estimatedPrices[priceItemKey]}
         onClose={() => setPriceModalOpen(false)}

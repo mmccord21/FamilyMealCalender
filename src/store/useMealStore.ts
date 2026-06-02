@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Recipe, DayMeal, DayMealRecipe, PantryItem, RecurringMeal, ManualShoppingItem, UserStore, WeekTemplate, ShoppingItem } from '@/types';
-import { getISOWeek, buildShoppingList, fmtShopAmt } from '@/lib/helpers';
+import { getISOWeek, buildShoppingList } from '@/lib/helpers';
 
 interface MealState {
   recipes: Recipe[];
@@ -543,7 +543,7 @@ export const useMealStore = create<MealState>((set, get) => ({
     const { prices } = get();
     const toEstimate = items
       .filter((i) => !prices[i.name.toLowerCase().trim()])
-      .map((i) => ({ name: i.name.toLowerCase().trim(), amount: fmtShopAmt(i) }));
+      .map((i) => ({ name: i.name.toLowerCase().trim(), qty: i.totalQty, unit: i.unit }));
     if (!toEstimate.length) return;
 
     const res = await fetch('/api/estimate-prices', {

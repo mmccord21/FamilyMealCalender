@@ -21,7 +21,7 @@ export default function Header({ total }: Props) {
 
       <div className={styles.right}>
         <div className={styles.budget}>
-          <span className={styles.budgetNum}>${total}</span>
+          <span className={styles.budgetNum}>${total.toFixed(2)}</span>
           <span className={styles.budgetLabel}>est. week</span>
         </div>
         {isLoaded && isSignedIn && <UserButton />}

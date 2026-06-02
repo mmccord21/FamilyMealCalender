@@ -571,18 +571,18 @@ export const useMealStore = create<MealState>((set, get) => ({
     const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
     set((state) => ({ checkedItems: { ...state.checkedItems, [itemKey]: checked } }));
     await fetch('/api/checked', { method: 'PUT', body: JSON.stringify({ itemKey, checked, weekYear, weekNum }) });
-    if (checked) {
-      const { recipes, dayMeals, recurring } = get();
-      const list = buildShoppingList(recipes, dayMeals, recurring);
-      const item = list.find((i) => i.name.toLowerCase().trim() === itemKey);
-      if (item && item.totalQty > 0 && item.unit) {
-        get().addToPantry(item.name, item.totalQty, item.unit ?? '');
-      }
-    }
   },
 
   resetChecked: async () => {
     const { weekYear, weekNum } = weekFromOffset(get().weekOffset);
+    const { recipes, dayMeals, recurring, checkedItems } = get();
+    // Stock pantry with everything that was checked off before clearing the list
+    const fullList = buildShoppingList(recipes, dayMeals, recurring);
+    for (const item of fullList) {
+      if (checkedItems[item.name.toLowerCase().trim()] && item.totalQty > 0 && item.unit) {
+        get().addToPantry(item.name, item.totalQty, item.unit);
+      }
+    }
     set({ checkedItems: {}, qtyOverrides: {} });
     await Promise.all([
       fetch(`/api/checked?weekYear=${weekYear}&weekNum=${weekNum}`, { method: 'DELETE' }),

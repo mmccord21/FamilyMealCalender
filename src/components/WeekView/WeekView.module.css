@@ -560,8 +560,9 @@
 
 .slotRow {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -571,8 +572,6 @@
   letter-spacing: 0.3px;
   color: var(--mu);
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 58px;
   text-transform: uppercase;
 }
 
@@ -580,24 +579,36 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  overflow: hidden;
+  flex-wrap: wrap;
 }
 
 .slotChip {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r-sm);
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 15px;
+  gap: 4px;
+  padding: 3px 8px 3px 5px;
+  border-radius: var(--r-pill);
   flex-shrink: 0;
   cursor: pointer;
   transition: transform var(--dur) var(--ease);
   line-height: 1;
 }
-.slotChip:hover { transform: scale(1.12); }
-.slotChip:active { transform: scale(0.92); }
+.slotChip:hover { transform: scale(1.04); }
+.slotChip:active { transform: scale(0.96); }
+
+.slotChipEmoji {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.slotChipName {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
 
 .slotNoRecipe {
   font-size: 11px;

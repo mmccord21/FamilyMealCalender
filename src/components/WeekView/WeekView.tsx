@@ -296,10 +296,12 @@ export default function WeekView({
                                 <span
                                   key={r.id}
                                   className={styles.slotChip}
-                                  style={{ background: `${r.color}1a` }}
+                                  style={{ background: `${r.color}1a`, color: r.color }}
                                   onClick={(e) => { e.stopPropagation(); onViewRecipe(r.id, meal.id, key, i); }}
-                                  title={r.name}
-                                >{r.emoji}</span>
+                                >
+                                  <span className={styles.slotChipEmoji}>{r.emoji}</span>
+                                  <span className={styles.slotChipName}>{r.name}</span>
+                                </span>
                               ))}
                               {mealRecipes.length === 0 && (
                                 <span className={styles.slotNoRecipe}>No recipe</span>

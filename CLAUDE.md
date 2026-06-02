@@ -1,16 +1,65 @@
 # FamilyMealCalender — CLAUDE.md
 
-> **Living document.** Update this file whenever architecture, design tokens, conventions, or goals meaningfully change.
+> **Living document.** Update this file whenever architecture, design tokens, conventions, or gotchas meaningfully change.
+
+---
+
+## Claude Workflow Protocol
+
+> These rules override default behavior. Follow on every task.
+
+1. **Plan first.** >2 files or any new feature/refactor → `EnterPlanMode`, state the approach, get alignment before touching code. Single-file bug fixes may proceed directly.
+2. **Protect main thread.** Broad searches → spawn `Explore` subagent. Architecture decisions → spawn `Plan` subagent. Independent reads → parallel tool calls. Never run 5+ Grep/Glob loops in the main thread.
+3. **Verify before done.** After every change: `npx tsc --noEmit` → `npm run build` → for UI: `npm run dev` + `preview_*` tools (not Chrome MCP). Never report done until all pass.
+4. **Learn live.** New gotcha found → add to **Key Constraints** immediately. Session complete → add row to **Update Log**. User preference → save memory file.
+
+---
+
+## NEVER
+
+- Add `'use client'` to `page.tsx` — it is a Server Component
+- Freehand spacing / radius / shadow values — use design tokens only
+- Skip `await auth()` in API routes before any DB access
+- Add side effects to `buildShoppingList` in `helpers.ts` — it must stay pure
+- Use a 7-column horizontal grid for WeekView — causes cell overflow (was removed)
+- Use `any` in TypeScript except at Prisma adapter boundaries
+- Assume Next.js 16 behavior from training data — read `node_modules/next/dist/docs/` first
+- Report "done" before `npx tsc --noEmit` and `npm run build` pass
+
+---
+
+## When Stuck
+
+| Problem | Where to look |
+|---|---|
+| Next.js APIs / routing | `node_modules/next/dist/docs/` |
+| Prisma queries / relations | `prisma/schema.prisma` + `node_modules/@prisma/client/` |
+| Clerk auth patterns | `node_modules/@clerk/nextjs/` |
+| Zustand state shape | `src/store/useMealStore.ts` |
+| Design token values | `src/app/globals.css :root` |
+
+---
+
+## Key Constraints & Gotchas
+
+> New gotcha discovered mid-session → add here immediately, don't wait.
+
+- **Next.js 16 is NOT the version you know from training.** Read `node_modules/next/dist/docs/` before writing any Next.js-specific code.
+- **WeekView is a vertical list of full-width day cards.** A compact 7-dot overview strip sits above. The old 7-column horizontal grid was removed — it caused cells to overflow.
+- **WeekView shows shimmer skeleton rows** while `store.weekLoading` is true (set during `fetchWeek`).
+- **`buildShoppingList` in `helpers.ts` is pure.** It derives the shopping list from `weekEntries + recurring` every render. No side effects.
+- **Prices keyed by lowercase ingredient name.**
+- **`weekOffset`**: 0 = this week, -1 = last, +1 = next. Navigation re-fetches from API.
+- **Recurring meal slots are user-defined.** The old hardcoded brunch/lunch seed is removed; existing DB rows still work.
 
 ---
 
 ## Project Vision
 
-A **family meal planning PWA** that feels like a premium, $1M product. The goal is the most beautiful, user-friendly food planning experience on mobile *and* desktop — think Notion-meets-a-Michelin-star-restaurant. Every pixel, interaction, and micro-animation should feel intentional and delightful.
+**Family meal planning PWA** that feels like a premium $1M product — the most beautiful, user-friendly food planning experience on mobile and desktop.
 
-**Core audiences:**
-- Primary: Mom/Dad on their phone in the grocery store
-- Secondary: Planner mode on iPad or desktop during Sunday meal prep
+- **Primary**: Mom/Dad on their phone in the grocery store
+- **Secondary**: Planner mode on iPad/desktop during Sunday meal prep
 
 ---
 
@@ -24,10 +73,10 @@ A **family meal planning PWA** that feels like a premium, $1M product. The goal 
 | Database | PostgreSQL via **Neon serverless** |
 | ORM | **Prisma 7** with `@prisma/adapter-neon` |
 | Auth | **Clerk** (`@clerk/nextjs` v7) |
-| AI | Anthropic SDK (`@anthropic-ai/sdk`) — recipe import via URL, photo & pasted text. URL/text use Haiku (`claude-haiku-4-5`); photo uses Sonnet vision. All use structured outputs (`output_config.format` json_schema) for guaranteed-parseable JSON |
+| AI | Anthropic SDK (`@anthropic-ai/sdk`) — URL/text → Haiku (`claude-haiku-4-5`); photo → Sonnet vision. All use structured outputs (`output_config.format` json_schema) |
 | Styling | **CSS Modules** + global design tokens in `globals.css` |
 | Icons | **lucide-react** — all UI chrome. Food/recipe emoji kept as user content (in tinted containers) |
-| Fonts | Playfair Display (headings/serif accent) · DM Sans (body) — loaded via Google Fonts |
+| Fonts | Playfair Display (headings) · DM Sans (body) — Google Fonts |
 | PWA | Inline manifest in `layout.tsx`, apple-web-app-capable, standalone display |
 
 ---
@@ -43,23 +92,25 @@ src/
 │   └── api/
 │       ├── recipes/        — GET all, POST create; [id]/ PUT update, DELETE
 │       ├── week/           — GET week entries by offset; [key]/ PUT single day
-│       ├── recurring/      — PUT recurring meal assignment
+│       ├── recurring/      — GET/POST/PATCH/DELETE recurring meal slots
+│       ├── stores/         — GET/POST/DELETE user-configurable stores
 │       ├── prices/         — PUT ingredient price
 │       ├── checked/        — GET/PUT/DELETE shopping check state
-│       ├── import-url/     — POST: parses JSON-LD; Haiku (structured output) for ingredients + tag mapping; instructions come free from schema
-│       ├── import-photo/   — POST: Sonnet vision (structured output) extracts recipe + instructions from a photo (base64)
-│       └── import-text/    — POST: Haiku (structured output) extracts a full recipe from pasted free text
+│       ├── hidden-items/   — GET/PUT/DELETE hidden shopping items
+│       ├── import-url/     — POST: JSON-LD parse + Haiku structured output
+│       ├── import-photo/   — POST: Sonnet vision structured output
+│       └── import-text/    — POST: Haiku structured output from pasted text
 ├── components/
 │   ├── MealPlannerApp.tsx  — Root client component; owns all modal state, toast, tab routing
 │   ├── Header/             — App title + estimated weekly cost + Clerk auth button
 │   ├── TabBar/             — Top tab pills: Week · Recipes · Shopping
 │   ├── BottomNav/          — Mobile bottom navigation (mirrors TabBar)
-│   ├── WeekView/           — 7-day column grid + recurring meals section
+│   ├── WeekView/           — Vertical day cards + 7-dot overview + recurring meals
 │   ├── RecipesView/        — Searchable recipe card list + Add Recipe
 │   ├── ShopView/           — Auto-generated shopping list, store filter, price tracking
 │   ├── DayModal/           — Edit a single day (assign meal, set guests, add note)
-│   ├── RecipePickerModal/  — Browse & pick a recipe for a day or recurring slot
-│   ├── RecipeEditorModal/  — Full recipe create/edit with ingredient management + AI import
+│   ├── RecipePickerModal/  — Browse & pick a recipe; tap-to-expand serving stepper
+│   ├── RecipeEditorModal/  — Full recipe create/edit + AI import
 │   ├── PriceModal/         — Set/update price for a single ingredient
 │   ├── Modal/              — Base modal shell (backdrop, sheet)
 │   └── Toast/              — Ephemeral success/error notifications
@@ -67,7 +118,7 @@ src/
 │   └── useMealStore.ts     — Zustand store: all app state + optimistic API actions
 ├── lib/
 │   ├── helpers.ts          — DAY_KEYS, colors, buildShoppingList, calcTotal, getISOWeek, getWeekDates
-│   ├── defaultData.ts      — Seed/default recipes (for dev/demo)
+│   ├── defaultData.ts      — Seed/default recipes (dev/demo)
 │   └── prisma.ts           — Prisma singleton (Neon adapter)
 └── types/
     └── index.ts            — Shared TS types: Recipe, Ingredient, WeekEntry, RecurringMeal, ShoppingItem
@@ -85,24 +136,26 @@ src/
 ## Data Models
 
 ```ts
-Recipe       { id, userId, emoji, name, sub, tags: string[], color, instructions?, ingredients: Ingredient[] }
-Ingredient   { id, recipeId, name, qty, unit, cat: IngredientCat, store: Store, noScale: boolean }
-WeekEntry    { id, dayKey, weekYear, weekNum, type: 'empty'|'meal'|'note', recipeId?, guests?, note? }
-RecurringMeal{ id, key (user-defined slug), label, recipeId? }
+Recipe          { id, userId, emoji, name, sub, tags: string[], color, instructions?, ingredients: Ingredient[] }
+Ingredient      { id, recipeId, name, qty, unit, cat: IngredientCat, store: Store, noScale: boolean }
+WeekEntry       { id, dayKey, weekYear, weekNum, type: 'empty'|'meal'|'note', recipeId?, guests?, note? }
+RecurringMeal   { id, key (user slug), label, recipeId? }
 IngredientPrice { name (lowercase key), price }
-ShoppingCheck{ itemKey, checked, weekYear, weekNum }
+ShoppingCheck   { itemKey, checked, weekYear, weekNum }
+ShoppingHiddenItem { itemKey, weekYear, weekNum }
+UserStore       { id, userId, name }
 ```
 
-Ingredient categories: `proteins | produce | dairy | pantry`
-Stores: user-defined strings; seeded as `Sprouts`, `Costco` on first use — managed via `/api/stores` and the ShopView ⚙ panel
-Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
+- Ingredient categories: `proteins | produce | dairy | pantry`
+- Stores: user-defined strings; seeded as `Sprouts`, `Costco` on first use
+- Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 
 ---
 
 ## Design System
 
 ### Philosophy
-**Premium · Warm · Calm.** The visual language is a warm editorial style — like a high-end food magazine meets a productivity app. Nothing should look "app-like" or clinical. Use white space aggressively. Let content breathe.
+**Premium · Warm · Calm.** Warm editorial — high-end food magazine meets productivity app. Never clinical or "app-like". White space is intentional. Every pixel should feel considered.
 
 ### Design Tokens (`globals.css :root`)
 ```css
@@ -116,74 +169,59 @@ Day keys: `Mon | Tue | Wed | Thu | Fri | Sat | Sun`
 --mu:   #9B8B7B   /* muted warm grey — secondary text */
 --bdr:  #EFE6DC   /* warm beige border */
 
-/* Spacing  */ --sp-1..8     /* 4 / 8 / 12 / 16 / 24 / 32 */
-/* Radius   */ --r-sm/md/lg  /* 10 / 14 / 18 */ · --r-pill /* 100 */
-/* Elevation*/ --shadow-sm/md/lg  /* soft, layered, low-opacity */
+/* Spacing  */ --sp-1..8    /* 4 / 8 / 12 / 16 / 24 / 32 */
+/* Radius   */ --r-sm/md/lg /* 10 / 14 / 18 */ · --r-pill /* 100 */
+/* Elevation*/ --shadow-sm/md/lg
 /* Motion   */ --ease (cubic-bezier) · --dur (180ms)
 ```
-Use these tokens — don't freehand spacing/radius/shadow values.
 
 ### Typography
 - **Headings / accents**: `Playfair Display` (serif, italic for elegance)
 - **Body / UI**: `DM Sans` (clean, rounded, modern sans)
-- The combination creates a "food editorial" feel — newspaper meets app
 
-### Day Colors (week grid)
+### Day Colors
 ```
 Mon #4A6FA5  Tue #4A7A52  Wed #A0652A  Thu #B54A2A  Fri #8B3A2A  Sat #C47A4A  Sun #6A4A8A
 ```
 
-### Tag Colors — restrained 3-color semantic palette
+### Tag Colors — 3-color semantic palette
 ```
-diet (keto)                         → sage  #3A6B42
-time (meal-prep · 30 min)           → gold  #A0652A
-occasion (crowd-pleaser · fun night · date night) → terra #B5522A
+diet (keto)                               → sage  #3A6B42
+time (meal-prep · 30 min)                 → gold  #A0652A
+occasion (crowd-pleaser · fun · date)     → terra #B5522A
 ```
-Tags render as **soft tinted pills** (colored text on a 10%-alpha tint of the same hue), not solid-fill white-text pills.
+Render as **soft tinted pills** — colored text on 10%-alpha tint. Never solid-fill white-text pills.
 
-### Design Goals (the "million dollar" standard)
-- **Mobile-first, desktop-great.** Every component must look perfect at 375px AND 1440px.
-- **Touch targets ≥ 44px** on all interactive elements.
-- **Micro-animations**: subtle scale on press (0.97), smooth transitions (150–250ms ease).
+### Design Rules
+- **Mobile-first.** Perfect at 375px AND 1440px. Touch targets ≥ 44px.
+- **Motion**: scale on press (0.97), transitions 150–250ms ease.
 - **No layout jank.** Fixed shell (`100dvh`), scrollable content area only.
-- **Safe areas.** Always use `env(safe-area-inset-*)` for iOS notch/home bar.
-- **Loading states.** Every async action shows feedback — skeleton, spinner, or optimistic update.
-- **Empty states.** Every empty list/state has a beautiful illustration-style icon + copy.
-- **Modals as sheets.** On mobile, modals slide up from bottom; on desktop, centered dialog.
-- **Consistent radii.** Cards: 16–20px. Pills/tags: 100px. Inputs: 12px.
-- **Shadows sparingly.** Use borders + background color shifts instead of heavy drop shadows.
+- **Safe areas.** Always `env(safe-area-inset-*)` for iOS notch/home bar.
+- **Every async action** shows feedback — skeleton, spinner, or optimistic update.
+- **Every empty state** has an illustration-style icon + copy.
+- **Modals**: slide up from bottom on mobile, centered dialog on desktop.
+- **Radii**: cards 16–20px, pills 100px, inputs 12px.
+- **Shadows sparingly.** Prefer borders + background shifts.
 
 ### Responsive Breakpoints
 ```
-Mobile:  < 768px   (primary design target)
+Mobile:  < 768px   (primary)
 Tablet:  768–1024px
-Desktop: > 1024px  (sidebar layout or wider content columns)
+Desktop: > 1024px
 ```
 
 ---
 
 ## Code Conventions
 
-- **No comments** unless the WHY is non-obvious. No docstrings.
-- **CSS Modules** for all component styles. Global tokens via `:root` vars only.
-- **No inline styles** except for dynamic values (color from data, etc.).
+- No comments unless the WHY is non-obvious. No docstrings.
+- CSS Modules for all component styles. Global tokens via `:root` vars only.
+- No inline styles except dynamic values (color from data, etc.).
 - TypeScript strict — no `any` except at Prisma boundaries.
-- Zustand actions do optimistic updates first, then `await fetch(...)`.
-- API routes always call `await auth()` from Clerk before touching the DB.
-- `page.tsx` is always a Server Component — no `'use client'` there.
-- Components under `components/` are always Client Components (`'use client'`) unless they have no interactivity.
-
----
-
-## Key Constraints & Gotchas
-
-- **Next.js 16 breaking changes** — this is NOT the Next.js you know from training. Read `node_modules/next/dist/docs/` before any Next.js-specific code. (See `AGENTS.md`.)
-- The week view is a **vertical list of full-width day cards** (each row sizes independently, so adding meals never breaks the layout). Above it sits a compact 7-dot overview strip. NOTE: an earlier 7-column horizontal grid was removed — it caused cells to grow and overflow the screen.
-- `WeekView` shows shimmer **skeleton rows** while `store.weekLoading` is true (set during `fetchWeek`).
-- `buildShoppingList` in `helpers.ts` is pure — it derives the shopping list from `weekEntries + recurring` every render. Do not add side effects there.
-- Prices are stored by **lowercase ingredient name** as the key.
-- `weekOffset` 0 = this week, -1 = last week, +1 = next week. Week navigation re-fetches from API.
-- Recurring meal slots are user-defined (add/rename/delete from WeekView). The old hardcoded brunch/lunch seed is removed; existing DB rows with those keys still work.
+- Zustand actions: optimistic update first, then `await fetch(...)`.
+- API routes: always `await auth()` from Clerk before touching DB.
+- `page.tsx` is always a Server Component — no `'use client'`.
+- Components in `components/` are Client Components (`'use client'`) unless they have zero interactivity.
 
 ---
 
@@ -193,10 +231,11 @@ Desktop: > 1024px  (sidebar layout or wider content columns)
 |---|---|
 | 2026-05-24 | Initial CLAUDE.md created — baseline audit of existing codebase |
 | 2026-05-30 | Design refresh Ph1+2: WeekView → vertical day cards + overview dots; lucide-react icons replace emoji chrome; compact header; spacing/radius/elevation/motion tokens; 3-color semantic tags (soft tints); week skeleton loaders; polished empty states |
-| 2026-05-30 | Recipe instructions added end-to-end (`instructions String?` on Recipe; editor textarea; threaded through POST/PUT). AI import overhaul: URL import now reads JSON-LD `recipeInstructions` for free + switched ingredient/tag parsing to Haiku w/ structured output; photo import gains instructions + structured output (still Sonnet vision); new paste-raw-text import (`/api/import-text`, Haiku) for sites without JSON-LD |
-| 2026-05-30 | Design refresh Ph3 (modals): base Modal uses tokens + desktop centered/pop-in (mobile sheet); DayModal cooking/not-cooking toggle + guest stepper + choose-recipe now Lucide icons, chosen-recipe emoji tinted, press states; RecipePicker has Search-icon input + SearchX empty state + tinted recipe avatars; PriceModal token buttons; Toast → floating pill w/ shadow-lg + scale-in |
-| 2026-06-01 | Security audit: all routes already scoped by userId. Fixed IDOR in `POST /api/meals/[id]/recipes` (now verifies recipeId belongs to caller before attaching). Removed dead `if (!recipe)` in `GET /api/recipes/[id]`. Removed stale "known gap" note about page.tsx (it already filtered by userId). |
-| 2026-06-01 | Recurring meals: user can add/rename/delete slots. Removed hardcoded brunch/lunch seed. Added POST/DELETE/PATCH to `/api/recurring`; new `addRecurring`/`deleteRecurring`/`renameRecurring` store actions; WeekView inline edit/delete/add UI; `recColor()` helper replaces hardcoded map. |
-| 2026-06-01 | User-configurable stores: `Store = string` (was literal union). New `UserStore` model in Prisma + `GET/POST/DELETE /api/stores` (seeds Sprouts + Costco on first use). `stores: UserStore[]` in Zustand state with `fetchStores`/`addStore`/`deleteStore`. SSR passes `initialStores` from page.tsx. RecipeEditorModal renders dynamic store pills (generic Store icon). ShopView renders dynamic filter row + inline "Manage stores" panel (⚙ icon toggles add/delete UI). `Ingredient.store` remains `String` in DB — no migration needed. |
-| 2026-06-01 | Delete from grocery list: auto-generated items now have an X button that hides them for the week. New `ShoppingHiddenItem` model (same pattern as `ShoppingCheck`). `/api/hidden-items` GET/PUT/DELETE. `hiddenItems` state in Zustand + `hideItem`/`restoreHiddenItems` actions; fetched in `fetchWeek` and SSR'd via page.tsx. Hidden items are filtered from the visible list. A "N hidden · Restore" bar appears when any items are hidden. |
-| 2026-06-02 | Serving size in recipe book + scale on pick: RecipesView cards now show "Serves X" in the meta line. RecipePickerModal tap-to-expand flow: tapping a recipe expands an inline confirmation panel with a serving stepper defaulting to the recipe's standard servings; "Add" confirms. `onSelect(id, servings)` signature updated; MealPlannerApp sets `meal.guests` to chosen servings when adding a recipe to a day meal. |
+| 2026-05-30 | Recipe instructions added end-to-end. AI import overhaul: URL → JSON-LD + Haiku structured output; photo → Sonnet vision structured output + instructions; new paste-text import (`/api/import-text`, Haiku) |
+| 2026-05-30 | Design refresh Ph3 (modals): token-based Modal, desktop pop-in/mobile sheet; DayModal Lucide icons + press states; RecipePicker search + empty state; PriceModal; Toast → floating pill |
+| 2026-06-01 | Security audit: all routes scoped by userId. Fixed IDOR in POST /api/meals/[id]/recipes. Removed dead code in GET /api/recipes/[id]. |
+| 2026-06-01 | Recurring meals: user can add/rename/delete slots. POST/DELETE/PATCH on `/api/recurring`; store actions; WeekView inline UI; `recColor()` helper. |
+| 2026-06-01 | User-configurable stores: `Store = string`. New `UserStore` model + `/api/stores`. Dynamic store pills in RecipeEditorModal + ShopView manage panel. |
+| 2026-06-01 | Hidden grocery items: X button hides items for the week. `ShoppingHiddenItem` model + `/api/hidden-items`. `hideItem`/`restoreHiddenItems` in Zustand. "N hidden · Restore" bar in ShopView. |
+| 2026-06-02 | Serving size in recipe book + scale on pick. RecipesView shows "Serves X". RecipePickerModal tap-to-expand inline panel with serving stepper. `onSelect(id, servings)` → sets `meal.guests` on add. |
+| 2026-06-02 | CLAUDE.md restructured for AI consumption: Workflow Protocol, NEVER block, When Stuck table, Key Constraints moved to top, prose tightened. |

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, SearchX } from 'lucide-react';
+import { Search, SearchX, Minus, Plus, Check } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import styles from './RecipePickerModal.module.css';
@@ -10,7 +10,7 @@ interface Props {
   open: boolean;
   recipes: Recipe[];
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, servings: number) => void;
 }
 
 function tagColor(tag: string): string {
@@ -22,9 +22,14 @@ function tagColor(tag: string): string {
 export default function RecipePickerModal({ open, recipes, onClose, onSelect }: Props) {
   const [query, setQuery] = useState('');
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [pendingServings, setPendingServings] = useState(4);
 
   useEffect(() => {
-    if (open) setActiveTag(null);
+    if (open) {
+      setActiveTag(null);
+      setExpandedId(null);
+    }
   }, [open]);
 
   const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
@@ -35,6 +40,22 @@ export default function RecipePickerModal({ open, recipes, onClose, onSelect }: 
     const matchesTag = !activeTag || r.tags.includes(activeTag);
     return matchesQuery && matchesTag;
   });
+
+  const handleItemClick = (r: Recipe) => {
+    if (expandedId === r.id) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(r.id);
+      setPendingServings(r.servings);
+    }
+  };
+
+  const handleAdd = (id: string) => {
+    onSelect(id, pendingServings);
+    onClose();
+    setQuery('');
+    setExpandedId(null);
+  };
 
   return (
     <Modal open={open} onBackdropClick={onClose}>
@@ -79,12 +100,39 @@ export default function RecipePickerModal({ open, recipes, onClose, onSelect }: 
           </div>
         ) : (
           filtered.map((r) => (
-            <div key={r.id} className={styles.item} onClick={() => { onSelect(r.id); onClose(); setQuery(''); }}>
-              <span className={styles.emoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
-              <div className={styles.info}>
-                <div className={styles.name}>{r.name}</div>
-                <div className={styles.meta}>{r.sub} · {r.ingredients.length} ingredients</div>
+            <div key={r.id} className={`${styles.itemWrap} ${expandedId === r.id ? styles.itemWrapOpen : ''}`}>
+              <div className={styles.item} onClick={() => handleItemClick(r)}>
+                <span className={styles.emoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
+                <div className={styles.info}>
+                  <div className={styles.name}>{r.name}</div>
+                  <div className={styles.meta}>{r.sub} · {r.ingredients.length} ingredient{r.ingredients.length === 1 ? '' : 's'} · Serves {r.servings}</div>
+                </div>
               </div>
+              {expandedId === r.id && (
+                <div className={styles.expand}>
+                  <span className={styles.expandLbl}>Servings</span>
+                  <div className={styles.stepper}>
+                    <button
+                      className={styles.stepBtn}
+                      onClick={(e) => { e.stopPropagation(); setPendingServings(Math.max(1, pendingServings - 1)); }}
+                      aria-label="Fewer servings"
+                    >
+                      <Minus size={13} strokeWidth={2.5} />
+                    </button>
+                    <span className={styles.stepNum}>{pendingServings}</span>
+                    <button
+                      className={styles.stepBtn}
+                      onClick={(e) => { e.stopPropagation(); setPendingServings(pendingServings + 1); }}
+                      aria-label="More servings"
+                    >
+                      <Plus size={13} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <button className={styles.addBtn} onClick={() => handleAdd(r.id)}>
+                    <Check size={14} strokeWidth={2.5} /> Add
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}

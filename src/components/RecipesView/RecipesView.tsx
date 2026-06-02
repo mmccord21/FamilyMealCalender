@@ -58,7 +58,7 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
                 <div className={styles.rcInfo}>
                   <div className={styles.rcName}>{r.name}</div>
                   <div className={styles.rcMeta}>
-                    {r.sub} · {r.ingredients.length} ingredient{r.ingredients.length === 1 ? '' : 's'}
+                    {r.sub} · {r.ingredients.length} ingredient{r.ingredients.length === 1 ? '' : 's'} · Serves {r.servings}
                   </div>
                   {(r.prepTime || r.cookTime) && (
                     <div className={styles.rcTime}>

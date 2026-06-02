@@ -244,9 +244,10 @@ export default function MealPlannerApp({
           setPickerOpen(false);
           setPickerForMealId(null);
         }}
-        onSelect={(id) => {
+        onSelect={(id, servings) => {
           if (pickerForMealId) {
             store.addRecipeToDayMeal(pickerForMealId, id);
+            store.updateDayMeal(pickerForMealId, { guests: servings });
             showToast('Recipe added ✓');
           } else if (editRecurKey) {
             store.saveRecurring(editRecurKey, id);

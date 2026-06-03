@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
   const body = await request.json();
-  const { emoji, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
+  const { emoji, imageUrl, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
 
   if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
@@ -25,7 +25,8 @@ export async function POST(request: Request) {
     const recipe = await prisma.recipe.create({
       data: {
         userId,
-        emoji: emoji || '🍽️',
+        emoji: emoji || '',
+        imageUrl: imageUrl || null,
         name,
         sub: sub || '',
         tags: tags || [],

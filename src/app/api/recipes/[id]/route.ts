@@ -16,7 +16,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
   const { id } = await params;
   const body = await request.json();
-  const { emoji, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
+  const { emoji, imageUrl, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
 
   const existing = await prisma.recipe.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) return new NextResponse('Unauthorized', { status: 401 });
@@ -26,7 +26,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   await prisma.recipe.update({
     where: { id },
     data: {
-      emoji,
+      emoji: emoji || '',
+      imageUrl: imageUrl ?? null,
       name,
       sub: sub || '',
       tags: tags || [],

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, ChevronLeft, ChevronRight, ChevronRight as Caret, Copy, LayoutTemplate, Pencil, Plus, Trash2, UtensilsCrossed, X } from 'lucide-react';
+import { CheckCircle, ChevronLeft, ChevronRight, ChevronRight as Caret, Copy, LayoutTemplate, MoreHorizontal, Pencil, Plus, Trash2, UtensilsCrossed, X } from 'lucide-react';
 import type { Recipe, DayMeal, RecurringMeal, WeekTemplate } from '@/types';
 import { DAY_KEYS, recColor, getWeekDates, getISOWeek, isToday } from '@/lib/helpers';
 import styles from './WeekView.module.css';
@@ -38,11 +38,10 @@ export default function WeekView({
   onAddRecurring, onDeleteRecurring, onRenameRecurring,
   onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked, onGoToRecipes,
 }: Props) {
-  const [showCopyMenu, setShowCopyMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [showOverflow, setShowOverflow] = useState(false);
   const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const templatesRef = useRef<HTMLDivElement>(null);
+  const overflowRef = useRef<HTMLDivElement>(null);
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
@@ -50,26 +49,16 @@ export default function WeekView({
   const [addLabel, setAddLabel] = useState('');
 
   useEffect(() => {
-    if (!showCopyMenu) return;
+    if (!showOverflow && !showTemplatesPanel) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowCopyMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showCopyMenu]);
-
-  useEffect(() => {
-    if (!showTemplatesPanel) return;
-    const handler = (e: MouseEvent) => {
-      if (templatesRef.current && !templatesRef.current.contains(e.target as Node)) {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setShowOverflow(false);
         setShowTemplatesPanel(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showTemplatesPanel]);
+  }, [showOverflow, showTemplatesPanel]);
 
   function commitSaveTemplate() {
     const trimmed = templateName.trim();
@@ -128,41 +117,34 @@ export default function WeekView({
           {weekContext && <div className={styles.weekBadge}>{weekContext}</div>}
         </div>
         <div className={styles.navBtns}>
-          <div className={styles.copyWrap} ref={menuRef}>
+          <div className={styles.copyWrap} ref={overflowRef}>
             <button
-              className={styles.utilBtn}
-              aria-label="Copy week meals"
-              onClick={() => setShowCopyMenu((v) => !v)}
+              className={styles.wkBtn}
+              aria-label="More options"
+              onClick={() => { setShowOverflow((v) => !v); setShowTemplatesPanel(false); }}
             >
-              <Copy size={13} strokeWidth={2} />
-              <span>Copy from</span>
+              <MoreHorizontal size={18} strokeWidth={2} />
             </button>
-            {showCopyMenu && (
+            {showOverflow && !showTemplatesPanel && (
               <div className={styles.copyMenu}>
                 {copyOptions.map((opt) => (
                   <button
                     key={opt.label}
                     className={styles.copyOption}
-                    onClick={() => {
-                      onCopyWeek(opt.weekYear, opt.weekNum);
-                      setShowCopyMenu(false);
-                    }}
+                    onClick={() => { onCopyWeek(opt.weekYear, opt.weekNum); setShowOverflow(false); }}
                   >
-                    {opt.label}
+                    <Copy size={12} strokeWidth={2} style={{ opacity: 0.5 }} /> {opt.label}
                   </button>
                 ))}
+                <div className={styles.menuDivider} />
+                <button
+                  className={styles.copyOption}
+                  onClick={() => { setShowOverflow(false); setShowTemplatesPanel(true); }}
+                >
+                  <LayoutTemplate size={12} strokeWidth={2} style={{ opacity: 0.5 }} /> Templates
+                </button>
               </div>
             )}
-          </div>
-          <div className={styles.copyWrap} ref={templatesRef}>
-            <button
-              className={styles.utilBtn}
-              aria-label="Week templates"
-              onClick={() => { setShowTemplatesPanel((v) => !v); setShowCopyMenu(false); }}
-            >
-              <LayoutTemplate size={13} strokeWidth={2} />
-              <span>Templates</span>
-            </button>
             {showTemplatesPanel && (
               <div className={styles.templatesPanel}>
                 <div className={styles.tplSaveRow}>
@@ -323,7 +305,6 @@ export default function WeekView({
                                   style={{ background: `${r.color}1a`, color: r.color }}
                                   onClick={(e) => { e.stopPropagation(); onViewRecipe(r.id, meal.id, key, i); }}
                                 >
-                                  <span className={styles.slotChipEmoji}>{r.emoji}</span>
                                   <span className={styles.slotChipName}>{r.name}</span>
                                 </span>
                               ))}
@@ -360,7 +341,9 @@ export default function WeekView({
           return (
             <div key={r.key} className={styles.recCard}>
               <div className={styles.recEmoji} style={{ background: `${col}1a` }}>
-                {recipe?.emoji ?? <UtensilsCrossed size={22} strokeWidth={1.75} style={{ color: col }} />}
+                {recipe?.imageUrl
+                  ? <img src={recipe.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+                  : <UtensilsCrossed size={22} strokeWidth={1.75} style={{ color: col }} />}
               </div>
               <div className={styles.recEditRow}>
                 <input
@@ -383,7 +366,9 @@ export default function WeekView({
         return (
           <div key={r.key} className={styles.recCard} onClick={() => onOpenRecurring(r.key)}>
             <div className={styles.recEmoji} style={{ background: `${col}1a` }}>
-              {recipe?.emoji ?? <UtensilsCrossed size={22} strokeWidth={1.75} style={{ color: col }} />}
+              {recipe?.imageUrl
+                ? <img src={recipe.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+                : <UtensilsCrossed size={22} strokeWidth={1.75} style={{ color: col }} />}
             </div>
             <div className={styles.recInfo}>
               <div className={styles.recType} style={{ color: col }}>{r.label}</div>

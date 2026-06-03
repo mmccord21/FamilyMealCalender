@@ -24,6 +24,7 @@ export interface Ingredient {
 export interface Recipe {
   id: string;
   emoji: string;
+  imageUrl?: string | null;
   name: string;
   sub: string;
   tags: string[];

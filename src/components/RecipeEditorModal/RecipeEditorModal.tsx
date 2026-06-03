@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Link2, Camera, FileText, Store as StoreIcon, Minus, Plus, ChevronUp, X, Check, Copy } from 'lucide-react';
+import { Link2, Camera, FileText, Store as StoreIcon, Minus, Plus, ChevronUp, X, Check, Copy, Upload, UtensilsCrossed } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, Ingredient, IngredientCat, UserStore } from '@/types';
-import { EMOJIS, CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
+import { CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
 import styles from './RecipeEditorModal.module.css';
 
 interface Props {
@@ -17,8 +17,34 @@ interface Props {
   onDuplicate: (recipe: Partial<Recipe>) => void | Promise<void>;
 }
 
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objUrl);
+      const SIZE = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('canvas')); return; }
+      const scale = Math.max(SIZE / img.width, SIZE / img.height);
+      const sw = SIZE / scale;
+      const sh = SIZE / scale;
+      const sx = (img.width - sw) / 2;
+      const sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.onerror = reject;
+    img.src = objUrl;
+  });
+}
+
 export default function RecipeEditorModal({ open, recipe, stores = [], onClose, onSave, onDelete, onDuplicate }: Props) {
-  const [emoji, setEmoji] = useState('🍳');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageInput, setImageInput] = useState('');
   const [name, setName] = useState('');
   const [sub, setSub] = useState('');
   const [tags, setTags] = useState('');
@@ -43,10 +69,12 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
   // Sync state when recipe changes
   useEffect(() => {
     if (open) {
-      setEmoji(recipe?.emoji ?? '🍳');
+      const url = recipe?.imageUrl ?? '';
+      setImageUrl(url);
+      setImageInput(url.startsWith('http') ? url : '');
       setName(recipe?.name ?? '');
       setSub(recipe?.sub ?? '');
-      setTags(recipe?.tags?.join(', ') ?? 'keto');
+      setTags(recipe?.tags?.join(', ') ?? '');
       setInstructions(recipe?.instructions ?? '');
       setServings(recipe?.servings ?? 4);
       setPrepTime(recipe?.prepTime ? String(recipe.prepTime) : '');
@@ -61,7 +89,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     }
   }, [open, recipe]);
 
-  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; servings?: number; prepTime?: number | null; cookTime?: number | null; ingredients: Ingredient[] }) => {
+  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; servings?: number; prepTime?: number | null; cookTime?: number | null; ingredients: Ingredient[]; imageUrl?: string | null }) => {
     setName(data.name);
     setSub(data.sub);
     setTags(data.tags.join(', '));
@@ -70,6 +98,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     setPrepTime(data.prepTime ? String(data.prepTime) : '');
     setCookTime(data.cookTime ? String(data.cookTime) : '');
     setIngredients(data.ingredients);
+    if (data.imageUrl) { setImageUrl(data.imageUrl); setImageInput(data.imageUrl.startsWith('http') ? data.imageUrl : ''); }
     setImportMode(null);
     setImportUrl('');
     setImportText('');
@@ -144,12 +173,32 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await compressImage(file);
+      setImageUrl(dataUrl);
+      setImageInput('');
+    } catch {
+      alert('Could not process image');
+    }
+    e.target.value = '';
+  };
+
+  const commitImageInput = () => {
+    if (imageInput.startsWith('http')) {
+      setImageUrl(imageInput);
+    }
+  };
+
   const handleSave = () => {
     if (!name.trim()) return alert('Name required');
     const tagsArr = tags.split(',').map((t) => t.trim()).filter(Boolean);
     onSave({
       ...(recipe ? { id: recipe.id } : {}),
-      emoji,
+      emoji: '',
+      imageUrl: imageUrl || null,
       name,
       sub,
       tags: tagsArr,
@@ -248,15 +297,34 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
         {importError && <div className={styles.importError}>{importError}</div>}
       </div>
 
-      <div className={styles.lbl}>Emoji</div>
-      <div className={styles.emojiGrid}>
-        {EMOJIS.map((em) => (
-          <div
-            key={em}
-            className={`${styles.eOpt} ${em === emoji ? styles.eOptPicked : ''}`}
-            onClick={() => setEmoji(em)}
-          >{em}</div>
-        ))}
+      <div className={styles.lbl}>Photo</div>
+      <div className={styles.imageSection}>
+        <div className={styles.imagePreview}>
+          {imageUrl ? (
+            <img src={imageUrl} alt="" className={styles.imagePreviewImg} onError={() => setImageUrl('')} />
+          ) : (
+            <UtensilsCrossed size={28} strokeWidth={1.5} style={{ color: 'var(--mu)' }} />
+          )}
+        </div>
+        <div className={styles.imageControls}>
+          <label className={styles.imageUploadBtn}>
+            <Upload size={13} strokeWidth={2} /> Upload Photo
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+          </label>
+          <input
+            className={styles.imageUrlInput}
+            placeholder="or paste image URL…"
+            value={imageInput}
+            onChange={(e) => setImageInput(e.target.value)}
+            onBlur={commitImageInput}
+            onKeyDown={(e) => { if (e.key === 'Enter') commitImageInput(); }}
+          />
+          {imageUrl && (
+            <button className={styles.imageRemoveBtn} onClick={() => { setImageUrl(''); setImageInput(''); }}>
+              Remove photo
+            </button>
+          )}
+        </div>
       </div>
 
       <input className={styles.mIn} placeholder="Recipe name…" value={name} onChange={(e) => setName(e.target.value)} />
@@ -401,7 +469,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
             className={styles.mSec}
             onClick={() => {
               const tagsArr = tags.split(',').map((t) => t.trim()).filter(Boolean);
-              onDuplicate({ emoji, name: `Copy of ${name}`, sub, tags: tagsArr, instructions: instructions.trim() || null, ingredients });
+              onDuplicate({ emoji: '', imageUrl: imageUrl || null, name: `Copy of ${name}`, sub, tags: tagsArr, instructions: instructions.trim() || null, ingredients });
             }}
           >
             <Copy size={15} strokeWidth={2} /> Duplicate

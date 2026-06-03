@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, X, GripVertical, BookOpen } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, X, GripVertical, BookOpen, UtensilsCrossed } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -88,7 +88,11 @@ function SortableMealRow({
           if (!recipe) return null;
           return (
             <div key={dmr.id} className={styles.recipePill}>
-              <span className={styles.pillEmoji} style={{ background: `${recipe.color}1a` }}>{recipe.emoji}</span>
+              <span className={styles.pillEmoji} style={{ background: `${recipe.color}1a` }}>
+                {recipe.imageUrl
+                  ? <img src={recipe.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+                  : <UtensilsCrossed size={14} strokeWidth={1.75} style={{ color: recipe.color }} />}
+              </span>
               <span className={styles.pillName}>{recipe.name}</span>
               <button
                 className={`${styles.pillShop} ${dmr.includeInShopping ? styles.shopOn : ''}`}

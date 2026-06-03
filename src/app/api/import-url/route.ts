@@ -56,6 +56,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not fetch that URL' }, { status: 422 });
   }
 
+  // Extract og:image for the recipe photo
+  const ogMatch = html.match(/<meta[^>]+(?:property=["']og:image["'][^>]*content=["']([^"']+)["']|content=["']([^"']+)["'][^>]*property=["']og:image["'])/i);
+  const ogImage = ogMatch?.[1] || ogMatch?.[2] || null;
+
   // Extract all JSON-LD blocks and find one with @type Recipe
   const ldMatches = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
   let schema: Record<string, unknown> | null = null;
@@ -157,6 +161,7 @@ ${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
 
   return NextResponse.json({
     name: rawName,
+    imageUrl: ogImage,
     sub: rawDescription.replace(/<[^>]+>/g, '').slice(0, 120),
     tags,
     instructions,

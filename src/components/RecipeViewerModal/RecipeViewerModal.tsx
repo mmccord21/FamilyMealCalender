@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, Edit3, Calendar, Users, Clock, CheckCircle } from 'lucide-react';
+import { X, Edit3, Calendar, Users, Clock, CheckCircle, UtensilsCrossed } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
@@ -55,7 +55,9 @@ export default function RecipeViewerModal({
     <Modal open={open} onBackdropClick={onClose}>
       <div className={styles.header}>
         <div className={styles.emojiWrap} style={{ background: `${recipe.color}1a` }}>
-          <span className={styles.emoji}>{recipe.emoji}</span>
+          {recipe.imageUrl
+            ? <img src={recipe.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+            : <UtensilsCrossed size={30} strokeWidth={1.5} style={{ color: recipe.color }} />}
         </div>
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
           <X size={18} strokeWidth={2.25} />

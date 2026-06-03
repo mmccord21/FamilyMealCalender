@@ -18,13 +18,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Meal Plan",
-    startupImage: [
-      { url: "/icon.svg" },
-    ],
-  },
-  icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
   },
 };
 
@@ -44,7 +37,7 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="apple-mobile-web-app-title" content="Meal Plan" />
-          <link rel="apple-touch-icon" href="/icon.svg" />
+          <link rel="apple-touch-icon" href="/apple-icon" />
         </head>
         <body>
           {children}

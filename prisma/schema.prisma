@@ -12,7 +12,8 @@ datasource db {
 model Recipe {
   id          String       @id @default(cuid())
   userId      String
-  emoji       String
+  emoji       String       @default("")
+  imageUrl    String?
   name        String
   sub         String?
   tags        String[]

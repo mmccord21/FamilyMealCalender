@@ -761,6 +761,8 @@
 .copyOption:last-child { border-bottom: none; }
 .copyOption:hover { background: var(--bg); }
 
+.menuDivider { height: 1px; background: var(--bdr); margin: 2px 0; }
+
 /* ── Templates Panel ── */
 .templatesPanel {
   position: absolute;

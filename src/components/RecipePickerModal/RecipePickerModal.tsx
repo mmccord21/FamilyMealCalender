@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, SearchX, Minus, Plus, Check } from 'lucide-react';
+import { Search, SearchX, Minus, Plus, Check, UtensilsCrossed } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import styles from './RecipePickerModal.module.css';
@@ -102,7 +102,11 @@ export default function RecipePickerModal({ open, recipes, onClose, onSelect }: 
           filtered.map((r) => (
             <div key={r.id} className={`${styles.itemWrap} ${expandedId === r.id ? styles.itemWrapOpen : ''}`}>
               <div className={styles.item} onClick={() => handleItemClick(r)}>
-                <span className={styles.emoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
+                <span className={styles.emoji} style={{ background: `${r.color}1a` }}>
+                  {r.imageUrl
+                    ? <img src={r.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+                    : <UtensilsCrossed size={18} strokeWidth={1.75} style={{ color: r.color }} />}
+                </span>
                 <div className={styles.info}>
                   <div className={styles.name}>{r.name}</div>
                   <div className={styles.meta}>{r.sub} · {r.ingredients.length} ingredient{r.ingredients.length === 1 ? '' : 's'} · Serves {r.servings}</div>

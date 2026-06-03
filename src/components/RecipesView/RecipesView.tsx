@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, BookOpen, Plus, SearchX, Clock } from 'lucide-react';
+import { Search, BookOpen, Plus, SearchX, Clock, UtensilsCrossed } from 'lucide-react';
 import type { Recipe } from '@/types';
 import styles from './RecipesView.module.css';
 import { useState } from 'react';
@@ -57,7 +57,11 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
 
             return (
               <div key={r.id} className={styles.recipeCard} onClick={() => onView(r.id)}>
-                <span className={styles.rcEmoji} style={{ background: `${r.color}1a` }}>{r.emoji}</span>
+                <span className={styles.rcEmoji} style={{ background: `${r.color}1a` }}>
+                  {r.imageUrl
+                    ? <img src={r.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: 'inherit' }} />
+                    : <UtensilsCrossed size={20} strokeWidth={1.75} style={{ color: r.color }} />}
+                </span>
                 <div className={styles.rcInfo}>
                   <div className={styles.rcName}>{r.name}</div>
                   <div className={styles.rcMeta}>

@@ -101,3 +101,16 @@
 .shopEmptyIcon { width: 64px; height: 64px; border-radius: 50%; background: #f5efe8; color: var(--gold); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-4); }
 .shopEmptyTitle { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--br); margin-bottom: 4px; }
 .shopEmptyTxt { font-size: 13.5px; line-height: 1.5; color: var(--mu); max-width: 260px; }
+
+/* Done (checked) section */
+.doneSec { margin-bottom: 20px; }
+.doneHdr { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 1.5px solid var(--bdr); border-radius: var(--r-sm); padding: 12px 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background var(--dur) var(--ease); }
+.doneHdr:active { background: #f5efe8; }
+.doneHdrCheck { width: 20px; height: 20px; border-radius: 6px; background: var(--sage); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.doneHdrLbl { flex: 1; text-align: left; font-size: 13.5px; font-weight: 600; color: var(--mu); }
+.doneChev { color: var(--mu); flex-shrink: 0; transition: transform var(--dur) var(--ease); }
+.doneChevOpen { transform: rotate(180deg); }
+.doneList { border: 1.5px solid var(--bdr); border-top: none; border-radius: 0 0 var(--r-sm) var(--r-sm); overflow: hidden; margin-top: -2px; }
+.doneItem { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-bottom: 1px solid var(--bdr); cursor: pointer; background: var(--sur); }
+.doneItem:last-child { border-bottom: none; }
+.doneItemName { font-size: 14px; font-weight: 500; text-decoration: line-through; color: var(--mu); }

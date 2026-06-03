@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { X, Edit3, Calendar, Users, Clock, CheckCircle } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
@@ -29,6 +30,13 @@ function parseSteps(instructions: string): string[] {
 export default function RecipeViewerModal({
   open, recipe, guests = BASE_GUESTS, dayMealId, cookedAt, onClose, onEditDay, onEditRecipe, onMarkCooked,
 }: Props) {
+  useEffect(() => {
+    if (!open || !('wakeLock' in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    navigator.wakeLock.request('screen').then((l) => { lock = l; }).catch(() => {});
+    return () => { lock?.release(); };
+  }, [open]);
+
   if (!recipe) return null;
 
   const scale = guests / BASE_GUESTS;

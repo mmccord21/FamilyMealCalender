@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ShoppingCart, ShoppingBag, Copy, Check, CalendarDays, Plus, X, Settings2, Sparkles, Info } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Copy, Check, ChevronDown, CalendarDays, Plus, X, Settings2, Sparkles, Info } from 'lucide-react';
 import type { ShoppingItem, ManualShoppingItem, UserStore } from '@/types';
 import { CATS, fmtShopAmt } from '@/lib/helpers';
 import styles from './ShopView.module.css';
@@ -44,6 +44,7 @@ export default function ShopView({
   const [editingQty, setEditingQty] = useState<string | null>(null);
   const [qtyDraft, setQtyDraft] = useState('');
   const [estimating, setEstimating] = useState(false);
+  const [doneOpen, setDoneOpen] = useState(false);
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
   const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store?.toLowerCase() === storeF.toLowerCase());
@@ -52,6 +53,11 @@ export default function ShopView({
   const checkedCount = visible.filter((i) => checkedItems[i.name.toLowerCase().trim()]).length
     + manualItems.filter((i) => checkedItems[`m:${i.id}`]).length;
   const totalCount = visible.length + manualItems.length;
+
+  const uncheckedVisible = visible.filter((i) => !checkedItems[i.name.toLowerCase().trim()]);
+  const checkedVisible = visible.filter((i) => !!checkedItems[i.name.toLowerCase().trim()]);
+  const uncheckedManual = manualItems.filter((i) => !checkedItems[`m:${i.id}`]);
+  const checkedManual = manualItems.filter((i) => !!checkedItems[`m:${i.id}`]);
 
   const itemCost = (mk: string, item: ShoppingItem) => {
     const p = prices[mk] || 0;
@@ -203,7 +209,7 @@ export default function ShopView({
       ) : (
         <>
           {Object.entries(CATS).map(([key, cat]) => {
-            const items = visible.filter((i) => i.cat === key);
+            const items = uncheckedVisible.filter((i) => i.cat === key);
             if (items.length === 0) return null;
 
             return (
@@ -214,14 +220,11 @@ export default function ShopView({
                 </div>
                 {items.map((item) => {
                   const mk = item.name.toLowerCase().trim();
-                  const done = checkedItems[mk];
                   const p = prices[mk] || 0;
 
                   return (
-                    <div key={item.mid} className={`${styles.sItem} ${done ? styles.done : ''}`} onClick={() => onToggleCheck(mk, !done)}>
-                      <div className={`${styles.chk} ${done ? styles.chkOn : ''}`}>
-                        {done && <Check size={14} strokeWidth={3} className={styles.chkMark} />}
-                      </div>
+                    <div key={item.mid} className={styles.sItem} onClick={() => onToggleCheck(mk, true)}>
+                      <div className={styles.chk}></div>
                       <div className={styles.iInfo}>
                         <div className={styles.iName}>{item.name}</div>
                         <div className={styles.iAmt}>
@@ -300,20 +303,17 @@ export default function ShopView({
             );
           })}
 
-          {manualItems.length > 0 && (
+          {uncheckedManual.length > 0 && (
             <div className={styles.catSec}>
               <div className={`${styles.catHdr} ${styles.catHdrCustom}`}>
                 <span className={styles.catIcon}>📝</span>
                 <span className={`${styles.catLbl} ${styles.catLblCustom}`}>Custom</span>
               </div>
-              {manualItems.map((item) => {
+              {uncheckedManual.map((item) => {
                 const mk = `m:${item.id}`;
-                const done = checkedItems[mk];
                 return (
-                  <div key={item.id} className={`${styles.sItem} ${done ? styles.done : ''}`} onClick={() => onToggleCheck(mk, !done)}>
-                    <div className={`${styles.chk} ${done ? styles.chkOn : ''}`}>
-                      {done && <Check size={14} strokeWidth={3} className={styles.chkMark} />}
-                    </div>
+                  <div key={item.id} className={styles.sItem} onClick={() => onToggleCheck(mk, true)}>
+                    <div className={styles.chk}></div>
                     <div className={styles.iInfo}>
                       <div className={styles.iName}>{item.name}</div>
                     </div>
@@ -327,6 +327,38 @@ export default function ShopView({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {(checkedVisible.length > 0 || checkedManual.length > 0) && (
+            <div className={styles.doneSec}>
+              <button className={styles.doneHdr} onClick={() => setDoneOpen((v) => !v)}>
+                <div className={styles.doneHdrCheck}><Check size={12} strokeWidth={3} /></div>
+                <span className={styles.doneHdrLbl}>Got it · {checkedVisible.length + checkedManual.length}</span>
+                <ChevronDown size={15} strokeWidth={2} className={`${styles.doneChev} ${doneOpen ? styles.doneChevOpen : ''}`} />
+              </button>
+              {doneOpen && (
+                <div className={styles.doneList}>
+                  {checkedVisible.map((item) => {
+                    const mk = item.name.toLowerCase().trim();
+                    return (
+                      <div key={item.mid} className={styles.doneItem} onClick={() => onToggleCheck(mk, false)}>
+                        <div className={`${styles.chk} ${styles.chkOn}`}><Check size={12} strokeWidth={3} className={styles.chkMark} /></div>
+                        <span className={styles.doneItemName}>{item.name}</span>
+                      </div>
+                    );
+                  })}
+                  {checkedManual.map((item) => {
+                    const mk = `m:${item.id}`;
+                    return (
+                      <div key={item.id} className={styles.doneItem} onClick={() => onToggleCheck(mk, false)}>
+                        <div className={`${styles.chk} ${styles.chkOn}`}><Check size={12} strokeWidth={3} className={styles.chkMark} /></div>
+                        <span className={styles.doneItemName}>{item.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </>

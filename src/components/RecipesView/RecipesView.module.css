@@ -113,3 +113,22 @@
   margin-bottom: 4px;
 }
 .emptyStateTxt  { font-size: 13.5px; line-height: 1.5; color: var(--mu); max-width: 240px; }
+
+.emptyAddBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 13px 24px;
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-pill);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.emptyAddBtn:hover { opacity: 0.9; }
+.emptyAddBtn:active { transform: scale(0.97); }

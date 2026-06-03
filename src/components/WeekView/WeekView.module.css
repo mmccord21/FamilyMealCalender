@@ -340,13 +340,79 @@
 }
 .dayRow:hover .arrow { color: var(--terra); transform: translateX(2px); }
 
+/* ── No-recipes guidance strip ── */
+.noRecipesHint {
+  background: #fff8f0;
+  border: 1px solid #ffd4a0;
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: var(--sp-3);
+}
+
+.noRecipesText {
+  font-size: 13px;
+  color: var(--br);
+  line-height: 1.4;
+}
+
+.noRecipesLink {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--terra);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.noRecipesLink:hover { opacity: 0.75; }
+
+/* ── Labeled utility buttons (Copy / Templates) ── */
+.utilBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 11px;
+  background: var(--sur);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--mu);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.utilBtn:hover { border-color: var(--gold); color: var(--br); }
+.utilBtn:active { transform: scale(0.94); background: #fbf5ee; }
+
 /* ── Recurring Section ── */
 .sectionLbl {
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--mu);
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+}
+
+.sectionSub {
+  font-size: 12px;
+  color: var(--mu);
+  margin-bottom: 12px;
+  opacity: 0.75;
 }
 
 .recCard {

@@ -25,6 +25,7 @@ interface Props {
   onApplyTemplate: (id: string) => void;
   onDeleteTemplate: (id: string) => void;
   onMarkCooked: (dayMealId: string) => void;
+  onGoToRecipes: () => void;
 }
 
 const DAY_ABBR: Record<string, string> = {
@@ -35,7 +36,7 @@ export default function WeekView({
   recipes, dayMeals, recurring, weekOffset, loading = false, templates,
   onShiftWeek, onOpenDay, onViewRecipe, onOpenRecurring, onCopyWeek,
   onAddRecurring, onDeleteRecurring, onRenameRecurring,
-  onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked,
+  onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked, onGoToRecipes,
 }: Props) {
   const [showCopyMenu, setShowCopyMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -129,11 +130,12 @@ export default function WeekView({
         <div className={styles.navBtns}>
           <div className={styles.copyWrap} ref={menuRef}>
             <button
-              className={styles.copyBtn}
+              className={styles.utilBtn}
               aria-label="Copy week meals"
               onClick={() => setShowCopyMenu((v) => !v)}
             >
-              <Copy size={15} strokeWidth={2} />
+              <Copy size={13} strokeWidth={2} />
+              <span>Copy from</span>
             </button>
             {showCopyMenu && (
               <div className={styles.copyMenu}>
@@ -154,11 +156,12 @@ export default function WeekView({
           </div>
           <div className={styles.copyWrap} ref={templatesRef}>
             <button
-              className={styles.copyBtn}
+              className={styles.utilBtn}
               aria-label="Week templates"
               onClick={() => { setShowTemplatesPanel((v) => !v); setShowCopyMenu(false); }}
             >
-              <LayoutTemplate size={15} strokeWidth={2} />
+              <LayoutTemplate size={13} strokeWidth={2} />
+              <span>Templates</span>
             </button>
             {showTemplatesPanel && (
               <div className={styles.templatesPanel}>
@@ -215,6 +218,15 @@ export default function WeekView({
           </button>
         </div>
       </div>
+
+      {recipes.length === 0 && (
+        <div className={styles.noRecipesHint}>
+          <span className={styles.noRecipesText}>Your recipe book is empty — add recipes to start planning</span>
+          <button className={styles.noRecipesLink} onClick={onGoToRecipes}>
+            Go to Recipes <Caret size={13} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       <div className={styles.overview}>
         {DAY_KEYS.map((key, i) => {
@@ -338,6 +350,7 @@ export default function WeekView({
       </div>
 
       <div className={styles.sectionLbl}>Recurring this week</div>
+      <div className={styles.sectionSub}>Meals that repeat week to week, separate from your daily plan</div>
 
       {recurring.map((r) => {
         const recipe = r.recipeId ? recipes.find((rec) => rec.id === r.recipeId) : null;

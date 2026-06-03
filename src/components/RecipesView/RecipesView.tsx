@@ -36,8 +36,11 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
         {filtered.length === 0 && !query ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}><BookOpen size={28} strokeWidth={1.75} /></div>
-            <div className={styles.emptyTitle}>No recipes yet</div>
-            <div className={styles.emptyStateTxt}>Add your first recipe to start building your library.</div>
+            <div className={styles.emptyTitle}>Your recipe book is empty</div>
+            <div className={styles.emptyStateTxt}>Start here — add your family&rsquo;s go-to meals and they&rsquo;ll be ready to plan and shop from.</div>
+            <button className={styles.emptyAddBtn} onClick={() => onOpenEditor(null)}>
+              <Plus size={15} strokeWidth={2.5} /> Add your first recipe
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className={styles.emptyState}>

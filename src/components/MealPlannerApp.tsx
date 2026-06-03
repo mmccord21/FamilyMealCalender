@@ -45,6 +45,7 @@ export default function MealPlannerApp({
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerForMealId, setPickerForMealId] = useState<string | null>(null);
+  const [pickerIsQuickAdd, setPickerIsQuickAdd] = useState(false);
   const [editRecurKey, setEditRecurKey] = useState<string | null>(null);
 
   const [recipeModalOpen, setRecipeModalOpen] = useState(false);
@@ -134,8 +135,22 @@ export default function MealPlannerApp({
             onOpenDay={(key, idx) => {
               setEditDayKey(key);
               setEditDayIdx(idx);
-              setDayModalOpen(true);
+              const dayHasMeals = store.dayMeals.some((m) => m.dayKey === key);
+              if (!dayHasMeals) {
+                if (store.recipes.length === 0) {
+                  store.setActiveTab('recipes');
+                  showToast('Add some recipes first, then come back to plan your week');
+                  return;
+                }
+                setPickerIsQuickAdd(true);
+                setPickerForMealId(null);
+                setPickerOpen(true);
+              } else {
+                setPickerIsQuickAdd(false);
+                setDayModalOpen(true);
+              }
             }}
+            onGoToRecipes={() => store.setActiveTab('recipes')}
             onViewRecipe={(recipeId, dayMealId, dayKey, dayIdx) => {
               setViewerRecipeId(recipeId);
               setViewerDayMealId(dayMealId);
@@ -295,8 +310,10 @@ export default function MealPlannerApp({
         onClose={() => {
           setPickerOpen(false);
           setPickerForMealId(null);
+          setPickerIsQuickAdd(false);
+          setEditRecurKey(null);
         }}
-        onSelect={(id, servings) => {
+        onSelect={async (id, servings) => {
           if (pickerForMealId) {
             store.addRecipeToDayMeal(pickerForMealId, id);
             store.updateDayMeal(pickerForMealId, { guests: servings });
@@ -304,9 +321,16 @@ export default function MealPlannerApp({
           } else if (editRecurKey) {
             store.saveRecurring(editRecurKey, id);
             showToast('Updated ✓');
+          } else if (pickerIsQuickAdd) {
+            const meal = await store.addDayMeal(editDayKey, 'Dinner');
+            store.addRecipeToDayMeal(meal.id, id);
+            if (servings !== BASE_GUESTS) store.updateDayMeal(meal.id, { guests: servings });
+            showToast('Added to plan ✓');
           }
           setPickerOpen(false);
           setPickerForMealId(null);
+          setPickerIsQuickAdd(false);
+          setEditRecurKey(null);
         }}
       />
 

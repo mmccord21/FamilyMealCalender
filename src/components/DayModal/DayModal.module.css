@@ -149,17 +149,20 @@
 }
 
 .pillShop {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
   border: 1.5px solid var(--bdr);
   background: none;
   color: var(--mu);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
   flex-shrink: 0;
+  white-space: nowrap;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .pillShop:hover { border-color: var(--sage); color: var(--sage); }
@@ -245,6 +248,86 @@
   font-weight: 700;
   min-width: 26px;
   text-align: center;
+}
+
+/* ── Empty day primary CTA ── */
+.emptyDayState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+
+.btnPickRecipe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px;
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.btnPickRecipe:hover { opacity: 0.92; }
+.btnPickRecipe:active { transform: scale(0.97); opacity: 0.88; }
+
+.emptyOrDivider {
+  font-size: 12px;
+  color: var(--mu);
+  opacity: 0.65;
+}
+
+.btnSecondaryTxt {
+  background: none;
+  border: none;
+  color: var(--mu);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 4px 8px;
+  transition: color var(--dur) var(--ease);
+}
+.btnSecondaryTxt:hover { color: var(--br); }
+
+/* ── Meal name suggestion chips ── */
+.mealSuggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mealSugChip {
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--bdr);
+  background: var(--sur);
+  color: var(--br);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.mealSugChip:hover { border-color: var(--terra); color: var(--terra); background: #fff8f5; }
+.mealSugChip:active { transform: scale(0.96); }
+
+.addOrDivider {
+  font-size: 11px;
+  color: var(--mu);
+  opacity: 0.65;
+  padding: 2px 0;
+  align-self: center;
 }
 
 /* ── Add meal area ── */

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, X, GripVertical } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, X, GripVertical, BookOpen } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -102,9 +102,9 @@ function SortableMealRow({
                   });
                 }}
                 aria-label={dmr.includeInShopping ? 'Remove from shopping list' : 'Add to shopping list'}
-                title={dmr.includeInShopping ? 'In grocery list' : 'Not in grocery list'}
               >
-                <ShoppingCart size={12} strokeWidth={2} />
+                <ShoppingCart size={11} strokeWidth={2} />
+                <span>{dmr.includeInShopping ? 'In list' : 'Add to list'}</span>
               </button>
               <button
                 className={styles.pillRemove}
@@ -182,6 +182,13 @@ export default function DayModal({
     if (name !== meal.name) store.updateDayMeal(meal.id, { name });
   }
 
+  const MEAL_SUGGESTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+
+  async function handleQuickPickRecipe() {
+    const meal = await store.addDayMeal(dayKey, 'Dinner');
+    onOpenPicker(meal.id);
+  }
+
   function handleAddMeal() {
     const name = newMealName.trim();
     if (!name) return;
@@ -213,12 +220,6 @@ export default function DayModal({
       </div>
 
       <div className={styles.mealList}>
-        {sortedMeals.length === 0 && !addingMeal && (
-          <div className={styles.emptyDay}>
-            No meals planned yet. Add one below.
-          </div>
-        )}
-
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortedMeals.map((m) => m.id)} strategy={verticalListSortingStrategy}>
             {sortedMeals.map((meal) => (
@@ -238,11 +239,34 @@ export default function DayModal({
         </DndContext>
       </div>
 
-      {addingMeal ? (
+      {sortedMeals.length === 0 && !addingMeal ? (
+        <div className={styles.emptyDayState}>
+          <button className={styles.btnPickRecipe} onClick={handleQuickPickRecipe}>
+            <BookOpen size={16} strokeWidth={2} />
+            Pick a Recipe
+          </button>
+          <div className={styles.emptyOrDivider}>— or —</div>
+          <button className={styles.btnSecondaryTxt} onClick={() => setAddingMeal(true)}>
+            Name a meal slot manually
+          </button>
+        </div>
+      ) : addingMeal ? (
         <div className={styles.addMealForm}>
+          <div className={styles.mealSuggestions}>
+            {MEAL_SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                className={styles.mealSugChip}
+                onClick={() => { store.addDayMeal(dayKey, s); setAddingMeal(false); }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className={styles.addOrDivider}>— or type below —</div>
           <input
             className={styles.addMealInput}
-            placeholder="e.g. Breakfast, Dinner, Late snack…"
+            placeholder="e.g. Late snack, Post-workout…"
             value={newMealName}
             onChange={(e) => setNewMealName(e.target.value)}
             onKeyDown={(e) => {

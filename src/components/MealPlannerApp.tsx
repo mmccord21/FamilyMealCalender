@@ -268,6 +268,8 @@ export default function MealPlannerApp({
         open={viewerOpen}
         recipe={store.recipes.find((r) => r.id === viewerRecipeId) || null}
         guests={store.dayMeals.find((m) => m.id === viewerDayMealId)?.guests ?? BASE_GUESTS}
+        dayMealId={viewerDayMealId}
+        cookedAt={store.dayMeals.find((m) => m.id === viewerDayMealId)?.cookedAt}
         onClose={() => setViewerOpen(false)}
         onEditDay={viewerDayKey ? () => {
           setViewerOpen(false);
@@ -280,6 +282,10 @@ export default function MealPlannerApp({
           setEditRecipeId(viewerRecipeId);
           setRecipeModalOpen(true);
         }}
+        onMarkCooked={viewerDayMealId ? async () => {
+          await store.markMealCooked(viewerDayMealId);
+          showToast('Meal cooked ✓ Pantry updated');
+        } : undefined}
       />
 
       <DayModal

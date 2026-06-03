@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Edit3, Calendar, Users, Clock } from 'lucide-react';
+import { X, Edit3, Calendar, Users, Clock, CheckCircle } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
@@ -10,9 +10,12 @@ interface Props {
   open: boolean;
   recipe: Recipe | null;
   guests?: number;
+  dayMealId?: string | null;
+  cookedAt?: string | null;
   onClose: () => void;
   onEditDay?: () => void;
   onEditRecipe: () => void;
+  onMarkCooked?: () => void;
 }
 
 function parseSteps(instructions: string): string[] {
@@ -24,7 +27,7 @@ function parseSteps(instructions: string): string[] {
 }
 
 export default function RecipeViewerModal({
-  open, recipe, guests = BASE_GUESTS, onClose, onEditDay, onEditRecipe,
+  open, recipe, guests = BASE_GUESTS, dayMealId, cookedAt, onClose, onEditDay, onEditRecipe, onMarkCooked,
 }: Props) {
   if (!recipe) return null;
 
@@ -130,6 +133,18 @@ export default function RecipeViewerModal({
 
       {!hasIngredients && !hasInstructions && (
         <div className={styles.empty}>No ingredients or instructions added yet.</div>
+      )}
+
+      {dayMealId && (
+        <button
+          className={`${styles.btnCooked} ${cookedAt ? styles.btnCookedDone : ''}`}
+          onClick={() => { if (!cookedAt) onMarkCooked?.(); }}
+          disabled={!!cookedAt}
+          aria-label={cookedAt ? 'Already cooked' : 'Mark as cooked'}
+        >
+          <CheckCircle size={17} strokeWidth={2} />
+          {cookedAt ? 'Cooked ✓' : 'Mark as Cooked'}
+        </button>
       )}
 
       <div className={styles.actions}>

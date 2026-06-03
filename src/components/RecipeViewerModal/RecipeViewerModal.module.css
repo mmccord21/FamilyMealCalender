@@ -172,10 +172,37 @@
   padding: var(--sp-5) 0;
 }
 
+.btnCooked {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: var(--sp-5);
+  padding: 15px;
+  background: var(--sage);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.btnCooked:active { transform: scale(0.97); opacity: 0.92; }
+
+.btnCookedDone {
+  background: #4A7A5222;
+  color: var(--sage);
+  cursor: default;
+}
+.btnCookedDone:active { transform: none; opacity: 1; }
+
 .actions {
   display: flex;
   gap: 9px;
-  margin-top: var(--sp-5);
+  margin-top: var(--sp-3);
 }
 
 .btnPri {

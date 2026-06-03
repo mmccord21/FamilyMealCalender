@@ -9,13 +9,14 @@ export async function POST(request: Request) {
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
 
   const body = await request.json();
-  const items: { name: string; qty: number; unit: string }[] = body.items ?? [];
+  const items: { name: string; unit: string; store?: string }[] = body.items ?? [];
   if (!items.length) return NextResponse.json({ prices: {} });
 
   // Use indexed list so the AI can't misname items — we map back by index
   const itemList = items.map((i, idx) => {
-    const unitLabel = i.unit ? i.unit : 'each';
-    return `${idx + 1}. ${i.name} — need: ${i.qty > 0 ? i.qty : 1} ${unitLabel}`;
+    const unitLabel = i.unit || 'each';
+    const storeLabel = i.store ? ` @ ${i.store}` : '';
+    return `${idx + 1}. ${i.name}${storeLabel} — 1 ${unitLabel}`;
   }).join('\n');
 
   let rawEstimates: { index: number; price_per_unit: number }[] = [];

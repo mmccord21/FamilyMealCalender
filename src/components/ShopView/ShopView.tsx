@@ -122,6 +122,9 @@ export default function ShopView({
             <ShoppingBag size={14} strokeWidth={2} /> {s.name}
           </button>
         ))}
+        <button className={styles.manageLink} onClick={() => setShowStoreManager((v) => !v)} aria-label="Manage stores">
+          <Settings2 size={14} strokeWidth={2} />
+        </button>
       </div>
 
       {showStoreManager && (
@@ -162,9 +165,6 @@ export default function ShopView({
       <div className={styles.shopHdr}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className={styles.prog}><strong>{checkedCount}</strong> of <strong>{totalCount}</strong> checked</span>
-          <button className={styles.manageLink} onClick={() => setShowStoreManager((v) => !v)} aria-label="Manage stores">
-            <Settings2 size={13} strokeWidth={2} />
-          </button>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {(hasUnpriced || hasEstimates) && (

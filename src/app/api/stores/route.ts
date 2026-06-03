@@ -2,20 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
-const DEFAULTS = ['Sprouts', 'Costco'];
-
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let stores = await prisma.userStore.findMany({ where: { userId }, orderBy: { name: 'asc' } });
-  if (stores.length === 0) {
-    await prisma.userStore.createMany({
-      data: DEFAULTS.map((name) => ({ userId, name })),
-      skipDuplicates: true,
-    });
-    stores = await prisma.userStore.findMany({ where: { userId }, orderBy: { name: 'asc' } });
-  }
+  const stores = await prisma.userStore.findMany({ where: { userId }, orderBy: { name: 'asc' } });
   return NextResponse.json(stores);
 }
 

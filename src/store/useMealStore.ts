@@ -543,7 +543,7 @@ export const useMealStore = create<MealState>((set, get) => ({
     const { prices } = get();
     const toEstimate = items
       .filter((i) => !prices[i.name.toLowerCase().trim()])
-      .map((i) => ({ name: i.name.toLowerCase().trim(), qty: i.totalQty, unit: i.unit }));
+      .map((i) => ({ name: i.name.toLowerCase().trim(), unit: i.unit, store: i.store ?? '' }));
     if (!toEstimate.length) return;
 
     const res = await fetch('/api/estimate-prices', {

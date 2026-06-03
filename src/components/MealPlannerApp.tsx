@@ -65,6 +65,16 @@ export default function MealPlannerApp({
   const [priceItemUnit, setPriceItemUnit] = useState('');
 
   useEffect(() => {
+    const splash = document.getElementById('__splash');
+    if (splash) {
+      clearTimeout((window as any).__splashTimer);
+      splash.style.transition = 'opacity 0.35s ease';
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 350);
+    }
+  }, []);
+
+  useEffect(() => {
     useMealStore.getState().setInitialData({
       recipes: initialRecipes,
       dayMeals: initialWeek,

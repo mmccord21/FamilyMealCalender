@@ -161,6 +161,7 @@ ${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
 
   return NextResponse.json({
     name: rawName,
+    sourceUrl: url,
     imageUrl: ogImage,
     sub: rawDescription.replace(/<[^>]+>/g, '').slice(0, 120),
     tags,

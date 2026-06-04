@@ -22,6 +22,7 @@ model Recipe {
   servings    Int          @default(4)
   prepTime    Int?
   cookTime    Int?
+  sourceUrl   String?
   ingredients Ingredient[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

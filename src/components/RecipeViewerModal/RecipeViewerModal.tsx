@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, Edit3, Calendar, Users, Clock, CheckCircle, UtensilsCrossed } from 'lucide-react';
+import { X, Edit3, Calendar, Users, Clock, CheckCircle, UtensilsCrossed, ExternalLink } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
@@ -155,6 +155,13 @@ export default function RecipeViewerModal({
           <CheckCircle size={17} strokeWidth={2} />
           {cookedAt ? 'Cooked ✓' : 'Mark as Cooked'}
         </button>
+      )}
+
+      {recipe.sourceUrl && (
+        <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer" className={styles.sourceLink}>
+          <ExternalLink size={13} strokeWidth={2} />
+          View original recipe
+        </a>
       )}
 
       <div className={styles.actions}>

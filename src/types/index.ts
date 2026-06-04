@@ -33,6 +33,7 @@ export interface Recipe {
   servings: number;
   prepTime?: number | null;
   cookTime?: number | null;
+  sourceUrl?: string | null;
   ingredients: Ingredient[];
 }
 

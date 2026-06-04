@@ -18,6 +18,13 @@
 .importTextArea:focus { border-color: var(--terra); }
 .importStatus { font-size: 12px; color: var(--mu); text-align: center; padding: 4px 0; }
 .importError { font-size: 12px; color: var(--terra); padding: 4px 0; }
+
+.sourceRow { display: flex; align-items: center; gap: 6px; margin: -4px 0 14px; padding: 8px 10px; background: #f5f0ea; border-radius: var(--r-sm); border: 1.5px solid var(--bdr); }
+.sourceLink { flex: 1; font-size: 12px; color: var(--terra); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sourceLink:hover { text-decoration: underline; }
+.sourceClear { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: none; background: none; cursor: pointer; color: var(--mu); border-radius: 50%; transition: background var(--dur); }
+.sourceClear:hover { background: #ede8e2; color: var(--br); }
+
 .lbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--mu); margin: 10px 0 7px; }
 
 .imageSection { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }

@@ -16,42 +16,43 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!userId) return new NextResponse('Unauthorized', { status: 401 });
   const { id } = await params;
   const body = await request.json();
-  const { emoji, imageUrl, name, sub, tags, color, instructions, servings, prepTime, cookTime, ingredients } = body;
+  const { emoji, imageUrl, name, sub, tags, color, instructions, servings, prepTime, cookTime, sourceUrl, ingredients } = body;
 
   const existing = await prisma.recipe.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) return new NextResponse('Unauthorized', { status: 401 });
 
-  await prisma.ingredient.deleteMany({ where: { recipeId: id } });
-
-  await prisma.recipe.update({
-    where: { id },
-    data: {
-      emoji: emoji || '',
-      imageUrl: imageUrl ?? null,
-      name,
-      sub: sub || '',
-      tags: tags || [],
-      color: color || '#888888',
-      instructions: instructions || null,
-      servings: servings ?? 4,
-      prepTime: prepTime ?? null,
-      cookTime: cookTime ?? null,
-    },
-  });
-
-  if (ingredients?.length) {
-    await prisma.ingredient.createMany({
-      data: ingredients.map((ing: any) => ({
-        recipeId: id,
-        name: ing.name,
-        qty: Number(ing.qty) || 0,
-        unit: ing.unit || '',
-        cat: ing.cat || 'pantry',
-        store: ing.store || '',
-        noScale: !!ing.noScale,
-      })),
-    });
-  }
+  await prisma.$transaction([
+    prisma.ingredient.deleteMany({ where: { recipeId: id } }),
+    prisma.recipe.update({
+      where: { id },
+      data: {
+        emoji: emoji || '',
+        imageUrl: imageUrl ?? null,
+        name,
+        sub: sub || '',
+        tags: tags || [],
+        color: color || '#888888',
+        instructions: instructions || null,
+        servings: servings ?? 4,
+        prepTime: prepTime ?? null,
+        cookTime: cookTime ?? null,
+        sourceUrl: sourceUrl || null,
+      },
+    }),
+    ...(ingredients?.length
+      ? [prisma.ingredient.createMany({
+          data: ingredients.map((ing: any) => ({
+            recipeId: id,
+            name: ing.name,
+            qty: Number(ing.qty) || 0,
+            unit: ing.unit || '',
+            cat: ing.cat || 'pantry',
+            store: ing.store || '',
+            noScale: !!ing.noScale,
+          })),
+        })]
+      : []),
+  ]);
 
   const recipe = await prisma.recipe.findUnique({
     where: { id },

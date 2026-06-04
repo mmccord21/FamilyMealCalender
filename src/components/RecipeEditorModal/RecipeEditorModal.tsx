@@ -59,11 +59,13 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     name: string; qty: string; unit: string; cat: IngredientCat; store: string; noScale: boolean;
   }>({ name: '', qty: '', unit: '', cat: 'produce', store: '', noScale: false });
 
+  const [sourceUrl, setSourceUrl] = useState('');
   const [importMode, setImportMode] = useState<'url' | 'text' | null>(null);
   const [importUrl, setImportUrl] = useState('');
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
+  const [saving, setSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state when recipe changes
@@ -80,6 +82,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
       setPrepTime(recipe?.prepTime ? String(recipe.prepTime) : '');
       setCookTime(recipe?.cookTime ? String(recipe.cookTime) : '');
       setIngredients(recipe?.ingredients ?? []);
+      setSourceUrl(recipe?.sourceUrl ?? '');
       setShowIngForm(false);
       setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: stores[0]?.name ?? '', noScale: false });
       setImportMode(null);
@@ -89,7 +92,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     }
   }, [open, recipe]);
 
-  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; servings?: number; prepTime?: number | null; cookTime?: number | null; ingredients: Ingredient[]; imageUrl?: string | null }) => {
+  const applyImport = (data: { name: string; sub: string; tags: string[]; instructions?: string; servings?: number; prepTime?: number | null; cookTime?: number | null; ingredients: Ingredient[]; imageUrl?: string | null; sourceUrl?: string | null }) => {
     setName(data.name);
     setSub(data.sub);
     setTags(data.tags.join(', '));
@@ -99,6 +102,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     setCookTime(data.cookTime ? String(data.cookTime) : '');
     setIngredients(data.ingredients);
     if (data.imageUrl) { setImageUrl(data.imageUrl); setImageInput(data.imageUrl.startsWith('http') ? data.imageUrl : ''); }
+    if (data.sourceUrl) setSourceUrl(data.sourceUrl);
     setImportMode(null);
     setImportUrl('');
     setImportText('');
@@ -192,22 +196,29 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return alert('Name required');
-    const tagsArr = tags.split(',').map((t) => t.trim()).filter(Boolean);
-    onSave({
-      ...(recipe ? { id: recipe.id } : {}),
-      emoji: '',
-      imageUrl: imageUrl || null,
-      name,
-      sub,
-      tags: tagsArr,
-      instructions: instructions.trim() || null,
-      servings,
-      prepTime: prepTime ? parseInt(prepTime, 10) : null,
-      cookTime: cookTime ? parseInt(cookTime, 10) : null,
-      ingredients,
-    });
+    if (saving) return;
+    setSaving(true);
+    try {
+      const tagsArr = tags.split(',').map((t) => t.trim()).filter(Boolean);
+      await onSave({
+        ...(recipe ? { id: recipe.id } : {}),
+        emoji: '',
+        imageUrl: imageUrl || null,
+        name,
+        sub,
+        tags: tagsArr,
+        instructions: instructions.trim() || null,
+        servings,
+        prepTime: prepTime ? parseInt(prepTime, 10) : null,
+        cookTime: cookTime ? parseInt(cookTime, 10) : null,
+        sourceUrl: sourceUrl.trim() || null,
+        ingredients,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addIngredient = () => {
@@ -296,6 +307,18 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
         {importing && <div className={styles.importStatus}>Importing recipe…</div>}
         {importError && <div className={styles.importError}>{importError}</div>}
       </div>
+
+      {sourceUrl && (
+        <div className={styles.sourceRow}>
+          <Link2 size={13} strokeWidth={2} style={{ color: 'var(--mu)', flexShrink: 0 }} />
+          <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className={styles.sourceLink}>
+            {(() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ''); } catch { return sourceUrl; } })()}
+          </a>
+          <button className={styles.sourceClear} onClick={() => setSourceUrl('')} aria-label="Remove source URL">
+            <X size={12} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       <div className={styles.lbl}>Photo</div>
       <div className={styles.imageSection}>
@@ -475,7 +498,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
             <Copy size={15} strokeWidth={2} /> Duplicate
           </button>
         )}
-        <button className={styles.mPri} onClick={handleSave}>Save Recipe</button>
+        <button className={styles.mPri} onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : 'Save Recipe'}</button>
       </div>
       {recipe && (
         <button

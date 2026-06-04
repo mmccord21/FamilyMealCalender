@@ -199,6 +199,24 @@
 }
 .btnCookedDone:active { transform: none; opacity: 1; }
 
+.sourceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--mu);
+  text-decoration: none;
+  padding: 9px 12px;
+  background: #f5f0ea;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--bdr);
+  width: 100%;
+  box-sizing: border-box;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.sourceLink:hover { color: var(--terra); border-color: var(--terra); }
+
 .actions {
   display: flex;
   gap: 9px;

@@ -1,0 +1,59 @@
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: rgba(181, 82, 42, 0.05);
+  border-bottom: 1px solid var(--bdr);
+  animation: hintIn 0.22s var(--ease) both;
+}
+
+.hint.hide {
+  animation: hintOut 0.22s var(--ease) forwards;
+}
+
+.icon {
+  color: var(--terra);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.msg {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--mu);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--mu);
+  cursor: pointer;
+  padding: var(--sp-1);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.close:hover {
+  color: var(--br);
+  background: var(--bdr);
+}
+
+@keyframes hintIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hintOut {
+  from { opacity: 1; max-height: 60px; padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
+  to   { opacity: 0; max-height: 0;    padding-top: 0;           padding-bottom: 0;           }
+}

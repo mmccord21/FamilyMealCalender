@@ -14,6 +14,9 @@ import RecipeViewerModal from '@/components/RecipeViewerModal/RecipeViewerModal'
 import PriceModal from '@/components/PriceModal/PriceModal';
 import Toast from '@/components/Toast/Toast';
 import InstallBanner from '@/components/InstallBanner/InstallBanner';
+import OnboardingModal from '@/components/OnboardingModal/OnboardingModal';
+import TabHint from '@/components/TabHint/TabHint';
+import { CalendarDays, BookOpen, ShoppingCart, Package } from 'lucide-react';
 
 import { useMealStore } from '@/store/useMealStore';
 import { buildShoppingList, calcTotal, BASE_GUESTS } from '@/lib/helpers';
@@ -57,6 +60,8 @@ export default function MealPlannerApp({
   const [viewerDayKey, setViewerDayKey] = useState<string | null>(null);
   const [viewerDayIdx, setViewerDayIdx] = useState(0);
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceItemKey, setPriceItemKey] = useState('');
   const [priceItemName, setPriceItemName] = useState('');
@@ -72,6 +77,7 @@ export default function MealPlannerApp({
       splash.style.opacity = '0';
       setTimeout(() => splash.remove(), 350);
     }
+    if (!localStorage.getItem('fmc_onboarded')) setShowOnboarding(true);
   }, []);
 
   useEffect(() => {
@@ -134,6 +140,7 @@ export default function MealPlannerApp({
       <div className="scroll">
         {store.activeTab === 'plan' && (
         <div className="tabPane">
+          <TabHint tabKey="plan" icon={<CalendarDays size={16} strokeWidth={2} />} message="Tap any day to assign a meal — the grocery list updates automatically" />
           <WeekView
             recipes={store.recipes}
             dayMeals={store.dayMeals}
@@ -202,6 +209,7 @@ export default function MealPlannerApp({
 
         {store.activeTab === 'recipes' && (
         <div className="tabPane">
+          <TabHint tabKey="recipes" icon={<BookOpen size={16} strokeWidth={2} />} message="Paste a URL, snap a photo, or type a recipe — ingredients import automatically" />
           <RecipesView
             recipes={store.recipes}
             prices={store.prices}
@@ -221,6 +229,7 @@ export default function MealPlannerApp({
 
         {store.activeTab === 'pantry' && (
         <div className="tabPane">
+          <TabHint tabKey="pantry" icon={<Package size={16} strokeWidth={2} />} message="Items stocked here are automatically skipped in your shopping list" />
           <PantryView
             pantryItems={store.pantryItems}
             recipes={store.recipes}
@@ -233,6 +242,7 @@ export default function MealPlannerApp({
 
         {store.activeTab === 'shop' && (
         <div className="tabPane">
+          <TabHint tabKey="shop" icon={<ShoppingCart size={16} strokeWidth={2} />} message="Tap any ingredient to set its price and track your weekly spend" />
           <ShopView
             shoppingList={shoppingList}
             checkedItems={store.checkedItems}
@@ -401,6 +411,14 @@ export default function MealPlannerApp({
         visible={!!toastMsg}
         message={toastMsg}
         action={toastAction ?? undefined}
+      />
+
+      <OnboardingModal
+        open={showOnboarding}
+        onDone={() => {
+          localStorage.setItem('fmc_onboarded', '1');
+          setShowOnboarding(false);
+        }}
       />
     </div>
   );

@@ -24,7 +24,6 @@
 
 .catSec { margin-bottom: 24px; }
 .catHdr { display: flex; align-items: center; gap: 7px; padding-bottom: 9px; margin-bottom: 2px; border-bottom: 2px solid; }
-.catIcon { font-size: 17px; }
 .catLbl { font-family: 'Playfair Display', serif; font-size: 18px; }
 
 .sItem { display: flex; align-items: flex-start; gap: 11px; padding: 12px 0; border-bottom: 1px solid var(--bdr); cursor: pointer; transition: opacity 0.15s; }
@@ -45,6 +44,10 @@
 .storeS { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #3a6b42; background: #eef5ef; }
 .storeC { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #1a4fa0; background: #eef3ff; }
 .storeChip { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: var(--mu); background: #f5efe8; border: 1px solid var(--bdr); }
+.storeChipBtn { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: var(--mu); background: #f5efe8; border: 1px solid var(--bdr); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.storeChipBtn:hover { border-color: var(--terra); color: var(--terra); background: #fff0ee; }
+.storeChipEmpty { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 100px; color: #c4b4a4; background: transparent; border: 1px dashed var(--bdr); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+.storeChipEmpty:hover { border-color: var(--terra); color: var(--terra); }
 
 .manageLink { background: none; border: none; padding: 4px; cursor: pointer; color: var(--mu); border-radius: 6px; display: inline-flex; align-items: center; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
 .manageLink:hover { color: var(--terra); background: rgba(181,82,42,0.07); }
@@ -114,3 +117,19 @@
 .doneItem { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-bottom: 1px solid var(--bdr); cursor: pointer; background: var(--sur); }
 .doneItem:last-child { border-bottom: none; }
 .doneItemName { font-size: 14px; font-weight: 500; text-decoration: line-through; color: var(--mu); }
+
+/* Store assignment sheet */
+.storeSheet { position: fixed; inset: 0; background: rgba(44,24,16,0.45); z-index: 200; display: flex; align-items: flex-end; }
+.storeSheetInner { width: 100%; background: var(--sur); border-radius: 20px 20px 0 0; padding: 20px 18px calc(env(safe-area-inset-bottom, 0px) + 24px); box-shadow: var(--shadow-lg); animation: slideUp 200ms var(--ease); }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.storeSheetHdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.storeSheetTitle { font-size: 14px; font-weight: 600; color: var(--br); }
+.storeSheetTitle em { font-style: normal; color: var(--terra); }
+.storeSheetClose { background: none; border: none; color: var(--mu); cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background var(--dur) var(--ease); }
+.storeSheetClose:hover { background: #f5efe8; }
+.storeSheetPills { display: flex; flex-wrap: wrap; gap: 8px; }
+.storeSheetPill { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; min-height: 44px; border-radius: var(--r-pill); border: 1.5px solid var(--bdr); background: var(--sur); font-size: 13px; font-weight: 600; color: var(--mu); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.storeSheetPill:hover { border-color: var(--terra); color: var(--terra); }
+.storeSheetPillOn { background: var(--terra); border-color: var(--terra); color: #fff; }
+.storeSheetPillOn:hover { background: #9e3d1a; border-color: #9e3d1a; color: #fff; }
+.storeSheetPillClear { border-style: dashed; color: var(--mu); }

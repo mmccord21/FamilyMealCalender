@@ -17,6 +17,16 @@ function parsePT(val: unknown): number | null {
   return total > 0 ? total : null;
 }
 
+function parseYield(val: unknown): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') return val > 0 ? Math.round(val) : null;
+  const str = Array.isArray(val) ? String(val[0] ?? '') : String(val);
+  const m = str.match(/\d+/);
+  if (!m) return null;
+  const n = parseInt(m[0], 10);
+  return n > 0 ? n : null;
+}
+
 function flattenInstructions(raw: unknown): string {
   const steps: string[] = [];
   const visit = (node: unknown) => {
@@ -90,6 +100,7 @@ export async function POST(request: Request) {
   const instructions = flattenInstructions(schema.recipeInstructions);
   const schemaPrepTime = parsePT(schema.prepTime);
   const schemaCookTime = parsePT(schema.cookTime);
+  const schemaServings = parseYield(schema.recipeYield);
 
   // Instructions come straight from the JSON-LD schema (no AI needed). Claude
   // Haiku only does the lightweight structured work: parse free-text ingredient
@@ -142,7 +153,7 @@ export async function POST(request: Request) {
           role: 'user',
           content: `Recipe: ${rawName}
 Site keywords: ${rawKeywords || '(none)'}
-
+${schema.recipeYield ? `Yield/servings: ${schema.recipeYield}` : ''}
 Parse these ingredients and pick fitting tags.
 
 Ingredients:
@@ -166,7 +177,7 @@ ${rawIngredients.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
     sub: rawDescription.replace(/<[^>]+>/g, '').slice(0, 120),
     tags,
     instructions,
-    servings: aiServings ?? 4,
+    servings: schemaServings ?? aiServings ?? 4,
     prepTime: schemaPrepTime ?? aiPrepTime,
     cookTime: schemaCookTime ?? aiCookTime,
     ingredients: ingredients.map((ing) => ({

@@ -28,6 +28,7 @@ interface Props {
   onAddStore: (name: string) => void;
   onDeleteStore: (id: string) => void;
   onEstimatePrices: () => Promise<void>;
+  onUpdateIngredientStore: (name: string, store: string) => Promise<void>;
 }
 
 export default function ShopView({
@@ -35,7 +36,7 @@ export default function ShopView({
   onToggleCheck, onResetChecked, onClearChecked, onOpenPrice, onCopy,
   onAddManualItem, onDeleteManualItem, onSetQtyOverride,
   onHideItem, onRestoreHidden,
-  onAddStore, onDeleteStore, onEstimatePrices,
+  onAddStore, onDeleteStore, onEstimatePrices, onUpdateIngredientStore,
 }: Props) {
   const [storeF, setStoreF] = useState<string>('all');
   const [showStoreManager, setShowStoreManager] = useState(false);
@@ -45,6 +46,7 @@ export default function ShopView({
   const [qtyDraft, setQtyDraft] = useState('');
   const [estimating, setEstimating] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
+  const [storeEditItem, setStoreEditItem] = useState<{ name: string; current: string } | null>(null);
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
   const storeFiltered = storeF === 'all' ? shoppingList : shoppingList.filter((i) => i.store?.toLowerCase() === storeF.toLowerCase());
@@ -94,7 +96,7 @@ export default function ShopView({
     Object.entries(CATS).forEach(([k, cat]) => {
       const items = activeItems.filter((i) => i.cat === k);
       if (!items.length) return;
-      txt += `${cat.i} ${cat.l.toUpperCase()}\n`;
+      txt += `${cat.l.toUpperCase()}\n`;
       items.forEach((i) => txt += `• ${i.name} — ${fmtShopAmt(i)}\n`);
       txt += '\n';
     });
@@ -215,7 +217,6 @@ export default function ShopView({
             return (
               <div key={key} className={styles.catSec}>
                 <div className={styles.catHdr} style={{ borderColor: cat.c }}>
-                  <span className={styles.catIcon}>{cat.i}</span>
                   <span className={styles.catLbl} style={{ color: cat.c }}>{cat.l}</span>
                 </div>
                 {items.map((item) => {
@@ -270,10 +271,24 @@ export default function ShopView({
                             <span key={idx} className={styles.mChip}>{d.key}</span>
                           ))}
                           {item.days.length > 1 && <span className={styles.sharedChip}>SHARED</span>}
-                          {item.store && (
-                            <span className={styles.storeChip}>
-                              <ShoppingBag size={11} strokeWidth={2.25} />{item.store}
-                            </span>
+                          {stores.length > 0 && (
+                            item.store ? (
+                              <button
+                                className={styles.storeChipBtn}
+                                onClick={(e) => { e.stopPropagation(); setStoreEditItem({ name: item.name, current: item.store }); }}
+                                aria-label="Change store"
+                              >
+                                <ShoppingBag size={11} strokeWidth={2.25} />{item.store}
+                              </button>
+                            ) : (
+                              <button
+                                className={styles.storeChipEmpty}
+                                onClick={(e) => { e.stopPropagation(); setStoreEditItem({ name: item.name, current: '' }); }}
+                                aria-label="Set store"
+                              >
+                                <ShoppingBag size={11} strokeWidth={2.25} />set store
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
@@ -306,7 +321,6 @@ export default function ShopView({
           {uncheckedManual.length > 0 && (
             <div className={styles.catSec}>
               <div className={`${styles.catHdr} ${styles.catHdrCustom}`}>
-                <span className={styles.catIcon}>📝</span>
                 <span className={`${styles.catLbl} ${styles.catLblCustom}`}>Custom</span>
               </div>
               {uncheckedManual.map((item) => {
@@ -371,6 +385,34 @@ export default function ShopView({
         </div>
         <div className={styles.tNum}>${total.toFixed(2)}</div>
       </div>
+
+      {storeEditItem && (
+        <div className={styles.storeSheet} onClick={() => setStoreEditItem(null)}>
+          <div className={styles.storeSheetInner} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.storeSheetHdr}>
+              <span className={styles.storeSheetTitle}>Assign store for <em>{storeEditItem.name}</em></span>
+              <button className={styles.storeSheetClose} onClick={() => setStoreEditItem(null)} aria-label="Close"><X size={16} strokeWidth={2.5} /></button>
+            </div>
+            <div className={styles.storeSheetPills}>
+              {storeEditItem.current && (
+                <button
+                  className={`${styles.storeSheetPill} ${styles.storeSheetPillClear}`}
+                  onClick={() => { onUpdateIngredientStore(storeEditItem.name, ''); setStoreEditItem(null); }}
+                >Remove store</button>
+              )}
+              {stores.map((s) => (
+                <button
+                  key={s.id}
+                  className={`${styles.storeSheetPill} ${storeEditItem.current === s.name ? styles.storeSheetPillOn : ''}`}
+                  onClick={() => { onUpdateIngredientStore(storeEditItem.name, s.name); setStoreEditItem(null); }}
+                >
+                  <ShoppingBag size={13} strokeWidth={2} /> {s.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

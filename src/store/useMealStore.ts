@@ -60,6 +60,7 @@ interface MealState {
   hideItem: (itemKey: string) => Promise<void>;
   restoreHiddenItems: () => Promise<void>;
   copyWeek: (fromWeekYear: number, fromWeekNum: number) => Promise<void>;
+  updateIngredientStore: (name: string, store: string) => Promise<void>;
 }
 
 function weekFromOffset(offset: number) {
@@ -644,5 +645,22 @@ export const useMealStore = create<MealState>((set, get) => ({
       body: JSON.stringify({ fromWeekYear, fromWeekNum, toWeekYear, toWeekNum }),
     });
     await get().fetchWeek();
+  },
+
+  updateIngredientStore: async (name, store) => {
+    // Optimistic update across all recipes
+    set((s) => ({
+      recipes: s.recipes.map((r) => ({
+        ...r,
+        ingredients: r.ingredients.map((ing) =>
+          ing.name.toLowerCase() === name.toLowerCase() ? { ...ing, store } : ing
+        ),
+      })),
+    }));
+    await fetch('/api/ingredients', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, store }),
+    });
   },
 }));

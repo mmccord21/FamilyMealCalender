@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Link2, Camera, FileText, Store as StoreIcon, Minus, Plus, ChevronUp, X, Check, Copy, Upload, UtensilsCrossed } from 'lucide-react';
+import { Link2, Camera, FileText, Store as StoreIcon, Minus, Plus, ChevronUp, X, Check, Copy, Upload, UtensilsCrossed, Pencil } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe, Ingredient, IngredientCat, UserStore } from '@/types';
-import { CAT_KEYS, CATS, catIcon, catColor } from '@/lib/helpers';
+import { CAT_KEYS, CATS, catColor } from '@/lib/helpers';
 import styles from './RecipeEditorModal.module.css';
 
 interface Props {
@@ -58,6 +58,10 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
   const [draftIng, setDraftIng] = useState<{
     name: string; qty: string; unit: string; cat: IngredientCat; store: string; noScale: boolean;
   }>({ name: '', qty: '', unit: '', cat: 'produce', store: '', noScale: false });
+  const [editingIngId, setEditingIngId] = useState<string | null>(null);
+  const [draftEditIng, setDraftEditIng] = useState<{
+    name: string; qty: string; unit: string; cat: IngredientCat; store: string; noScale: boolean;
+  }>({ name: '', qty: '', unit: '', cat: 'produce', store: '', noScale: false });
 
   const [sourceUrl, setSourceUrl] = useState('');
   const [importMode, setImportMode] = useState<'url' | 'text' | null>(null);
@@ -84,6 +88,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
       setIngredients(recipe?.ingredients ?? []);
       setSourceUrl(recipe?.sourceUrl ?? '');
       setShowIngForm(false);
+      setEditingIngId(null);
       setDraftIng({ name: '', qty: '', unit: '', cat: 'produce', store: stores[0]?.name ?? '', noScale: false });
       setImportMode(null);
       setImportUrl('');
@@ -241,6 +246,22 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
 
   const removeIngredient = (id: string) => {
     setIngredients(ingredients.filter((i) => i.id !== id));
+  };
+
+  const startEditIng = (ing: Ingredient) => {
+    setEditingIngId(ing.id);
+    setDraftEditIng({ name: ing.name, qty: ing.qty ? String(ing.qty) : '', unit: ing.unit, cat: ing.cat, store: ing.store ?? '', noScale: ing.noScale });
+    setShowIngForm(false);
+  };
+
+  const saveEditIng = () => {
+    if (!editingIngId) return;
+    setIngredients(ingredients.map((i) =>
+      i.id === editingIngId
+        ? { ...i, name: draftEditIng.name.trim() || i.name, qty: parseFloat(draftEditIng.qty) || 0, unit: draftEditIng.unit.trim(), cat: draftEditIng.cat, store: draftEditIng.store, noScale: draftEditIng.noScale }
+        : i
+    ));
+    setEditingIngId(null);
   };
 
   return (
@@ -408,18 +429,71 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
         {ingredients.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--mu)', padding: '8px 0' }}>No ingredients yet.</div>
         ) : (
-          ingredients.map((ing) => (
-            <div key={ing.id} className={styles.ingRow}>
-              <span className={styles.ingIcon}>{catIcon(ing.cat)}</span>
-              <div className={styles.ingInfo}>
-                <div className={styles.ingName}>{ing.name}</div>
-                <div className={styles.ingQty}>
-                  {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''}{ing.store ? ` · ${ing.store}` : ''}
+          ingredients.map((ing) =>
+            editingIngId === ing.id ? (
+              <div key={ing.id} className={styles.ingEditForm}>
+                <input
+                  className={styles.mInSm} style={{ marginBottom: 10 }}
+                  placeholder="Ingredient name…" value={draftEditIng.name}
+                  onChange={(e) => setDraftEditIng({ ...draftEditIng, name: e.target.value })}
+                />
+                <div className={styles.ingFormRow}>
+                  <input
+                    className={styles.mInSm} style={{ width: 80, flexShrink: 0, marginTop: 0, paddingTop: 0 }}
+                    type="number" placeholder="Qty" value={draftEditIng.qty}
+                    onChange={(e) => setDraftEditIng({ ...draftEditIng, qty: e.target.value })}
+                  />
+                  <input
+                    className={styles.mInSm} style={{ flex: 1, marginTop: 0, paddingTop: 0 }}
+                    placeholder="Unit (lbs, bunch, oz…)" value={draftEditIng.unit}
+                    onChange={(e) => setDraftEditIng({ ...draftEditIng, unit: e.target.value })}
+                  />
+                </div>
+                <div className={styles.catPills} style={{ marginTop: 4 }}>
+                  {CAT_KEYS.map((k) => (
+                    <button
+                      key={k}
+                      className={`${styles.catPill} ${draftEditIng.cat === k ? styles.catPillOn : ''}`}
+                      style={draftEditIng.cat === k ? { background: catColor(k), borderColor: catColor(k) } : {}}
+                      onClick={() => setDraftEditIng({ ...draftEditIng, cat: k })}
+                    >{CATS[k].l}</button>
+                  ))}
+                </div>
+                {stores.length > 0 && (
+                  <div className={styles.storePills} style={{ marginBottom: 10 }}>
+                    {stores.map((s) => (
+                      <button
+                        key={s.id}
+                        className={`${styles.storePill} ${draftEditIng.store === s.name ? styles.storePillOn : ''}`}
+                        onClick={() => setDraftEditIng({ ...draftEditIng, store: s.name })}
+                      ><StoreIcon size={13} strokeWidth={2} /> {s.name}</button>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.fixedToggle} onClick={() => setDraftEditIng({ ...draftEditIng, noScale: !draftEditIng.noScale })}>
+                  <div className={`${styles.toggleBox} ${draftEditIng.noScale ? styles.toggleBoxOn : ''}`}>
+                    {draftEditIng.noScale && <Check size={13} strokeWidth={3} color="white" />}
+                  </div>
+                  Fixed qty — doesn&apos;t scale with guest count
+                </div>
+                <div className={styles.ingEditActions}>
+                  <button className={styles.ingEditCancel} onClick={() => setEditingIngId(null)}>Cancel</button>
+                  <button className={styles.ingEditSave} onClick={saveEditIng}>Save</button>
                 </div>
               </div>
-              <button className={styles.ingDel} onClick={() => removeIngredient(ing.id)} aria-label="Remove ingredient"><X size={16} strokeWidth={2.5} /></button>
-            </div>
-          ))
+            ) : (
+              <div key={ing.id} className={styles.ingRow}>
+                <div className={styles.ingInfo}>
+                  <div className={styles.ingName}>{ing.name}</div>
+                  <div className={styles.ingQty}>
+                    {ing.qty ? `${ing.qty} ` : ''}{ing.unit}{ing.noScale ? ' · fixed' : ''}{ing.store ? ` · ${ing.store}` : ''}
+                  </div>
+                </div>
+                <button className={styles.ingEdit} onClick={() => startEditIng(ing)} aria-label="Edit ingredient"><Pencil size={14} strokeWidth={2.25} /></button>
+                <button className={styles.ingDel} onClick={() => removeIngredient(ing.id)} aria-label="Remove ingredient"><X size={16} strokeWidth={2.5} /></button>
+              </div>
+            )
+          )
         )}
       </div>
 
@@ -455,7 +529,7 @@ export default function RecipeEditorModal({ open, recipe, stores = [], onClose, 
                 className={`${styles.catPill} ${draftIng.cat === k ? styles.catPillOn : ''}`}
                 style={draftIng.cat === k ? { background: catColor(k), borderColor: catColor(k) } : {}}
                 onClick={() => setDraftIng({ ...draftIng, cat: k })}
-              >{CATS[k].i} {CATS[k].l}</button>
+              >{CATS[k].l}</button>
             ))}
           </div>
 

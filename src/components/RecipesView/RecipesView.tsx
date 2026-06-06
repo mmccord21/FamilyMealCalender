@@ -32,6 +32,11 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
         />
       </div>
 
+      <button className={styles.addRecipeCard} onClick={() => onOpenEditor(null)}>
+        <Plus size={18} strokeWidth={2.5} className={styles.arcIcon} />
+        <span className={styles.arcLbl}>Add a Recipe</span>
+      </button>
+
       <div className={styles.list}>
         {filtered.length === 0 && !query ? (
           <div className={styles.emptyState}>
@@ -69,12 +74,14 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
                   </div>
                   {(r.prepTime || r.cookTime) && (
                     <div className={styles.rcTime}>
-                      <Clock size={11} strokeWidth={2} />
-                      {r.prepTime && r.cookTime
-                        ? `${r.prepTime} min prep · ${r.cookTime} min cook`
-                        : r.prepTime
-                        ? `${r.prepTime} min prep`
-                        : `${r.cookTime} min cook`}
+                      <Clock size={11} strokeWidth={2} style={{ flexShrink: 0 }} />
+                      <span className={styles.rcTimeText}>
+                        {r.prepTime && r.cookTime
+                          ? `${r.prepTime} min prep · ${r.cookTime} min cook`
+                          : r.prepTime
+                          ? `${r.prepTime} min prep`
+                          : `${r.cookTime} min cook`}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -84,11 +91,6 @@ export default function RecipesView({ recipes, prices, onView, onOpenEditor }: P
           })
         )}
       </div>
-
-      <button className={styles.addRecipeCard} onClick={() => onOpenEditor(null)}>
-        <Plus size={18} strokeWidth={2.5} className={styles.arcIcon} />
-        <span className={styles.arcLbl}>Add a Recipe</span>
-      </button>
     </div>
   );
 }

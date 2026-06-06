@@ -60,11 +60,12 @@
   font-size: 24px;
   flex-shrink: 0;
 }
-.rcInfo  { flex: 1; min-width: 0; }
-.rcName  { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 2px; }
-.rcMeta  { font-size: 12px; color: var(--mu); }
+.rcInfo  { flex: 1; min-width: 0; overflow: hidden; }
+.rcName  { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcMeta  { font-size: 12px; color: var(--mu); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rcPrice { font-size: 14px; font-weight: 600; color: var(--sage); flex-shrink: 0; }
-.rcTime { font-size: 11px; color: var(--mu); display: flex; align-items: center; gap: 4px; margin-top: 3px; }
+.rcTime { font-size: 11px; color: var(--mu); display: flex; align-items: center; gap: 4px; margin-top: 3px; min-width: 0; overflow: hidden; }
+.rcTimeText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .addRecipeCard {
   background: none;

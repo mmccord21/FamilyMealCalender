@@ -271,6 +271,7 @@ export default function MealPlannerApp({
             onRestoreHidden={store.restoreHiddenItems}
             onAddStore={store.addStore}
             onDeleteStore={store.deleteStore}
+            onUpdateIngredientStore={store.updateIngredientStore}
             onEstimatePrices={async () => {
               try {
                 await store.estimatePrices(shoppingList);
@@ -287,7 +288,7 @@ export default function MealPlannerApp({
       <RecipeViewerModal
         open={viewerOpen}
         recipe={store.recipes.find((r) => r.id === viewerRecipeId) || null}
-        guests={store.dayMeals.find((m) => m.id === viewerDayMealId)?.guests ?? BASE_GUESTS}
+        guests={store.dayMeals.find((m) => m.id === viewerDayMealId)?.guests ?? undefined}
         dayMealId={viewerDayMealId}
         cookedAt={store.dayMeals.find((m) => m.id === viewerDayMealId)?.cookedAt}
         onClose={() => setViewerOpen(false)}

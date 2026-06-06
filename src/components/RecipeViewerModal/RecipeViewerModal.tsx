@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { X, Edit3, Calendar, Users, Clock, CheckCircle, UtensilsCrossed, ExternalLink } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
-import { TAG_COLORS, CATS, CAT_KEYS, BASE_GUESTS, fmtQ } from '@/lib/helpers';
+import { TAG_COLORS, CATS, CAT_KEYS, fmtQ } from '@/lib/helpers';
 import styles from './RecipeViewerModal.module.css';
 
 interface Props {
@@ -28,7 +28,7 @@ function parseSteps(instructions: string): string[] {
 }
 
 export default function RecipeViewerModal({
-  open, recipe, guests = BASE_GUESTS, dayMealId, cookedAt, onClose, onEditDay, onEditRecipe, onMarkCooked,
+  open, recipe, guests, dayMealId, cookedAt, onClose, onEditDay, onEditRecipe, onMarkCooked,
 }: Props) {
   useEffect(() => {
     if (!open || !('wakeLock' in navigator)) return;
@@ -39,7 +39,8 @@ export default function RecipeViewerModal({
 
   if (!recipe) return null;
 
-  const scale = guests / BASE_GUESTS;
+  const effectiveGuests = guests ?? recipe.servings;
+  const scale = effectiveGuests / recipe.servings;
 
   const grouped = CAT_KEYS.reduce<Record<string, typeof recipe.ingredients>>((acc, cat) => {
     const items = recipe.ingredients.filter((i) => i.cat === cat);
@@ -95,10 +96,10 @@ export default function RecipeViewerModal({
         </div>
       )}
 
-      {guests !== BASE_GUESTS && (
+      {effectiveGuests !== recipe.servings && (
         <div className={styles.guestBadge}>
           <Users size={13} strokeWidth={2.25} />
-          Scaled for {guests} {guests === 1 ? 'person' : 'people'}
+          Scaled for {effectiveGuests} {effectiveGuests === 1 ? 'person' : 'people'}
         </div>
       )}
 

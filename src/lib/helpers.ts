@@ -26,11 +26,11 @@ export const TAG_COLORS: Record<string, string> = {
   'date night': '#B5522A',
 };
 
-export const CATS: Record<string, { l: string; i: string; c: string }> = {
-  proteins: { l: 'Proteins', i: '🥩', c: '#8B3A2A' },
-  produce:  { l: 'Produce',  i: '🥬', c: '#3A6B42' },
-  dairy:    { l: 'Dairy & Eggs', i: '🥚', c: '#8B6914' },
-  pantry:   { l: 'Pantry',   i: '🫙', c: '#4A5A6A' },
+export const CATS: Record<string, { l: string; c: string }> = {
+  proteins: { l: 'Proteins',    c: '#8B3A2A' },
+  produce:  { l: 'Produce',     c: '#3A6B42' },
+  dairy:    { l: 'Dairy & Eggs', c: '#8B6914' },
+  pantry:   { l: 'Pantry',      c: '#4A5A6A' },
 };
 export const CAT_KEYS = Object.keys(CATS) as IngredientCat[];
 
@@ -51,9 +51,6 @@ export function scaleIngredients(ingredients: Ingredient[], baseServings: number
   );
 }
 
-export function catIcon(cat: string): string {
-  return CATS[cat]?.i ?? '🛒';
-}
 export function catColor(cat: string): string {
   return CATS[cat]?.c ?? '#888';
 }

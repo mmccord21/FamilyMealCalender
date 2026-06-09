@@ -19,8 +19,18 @@ interface Props {
   onMarkCooked?: () => void;
 }
 
+function decodeEntities(str: string): string {
+  return str
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function parseSteps(instructions: string): string[] {
-  const trimmed = instructions.trim();
+  const trimmed = decodeEntities(instructions.trim());
   if (/^\d+\.\s+/m.test(trimmed)) {
     return trimmed.split(/\n?\d+\.\s+/).filter((s) => s.trim()).map((s) => s.trim());
   }

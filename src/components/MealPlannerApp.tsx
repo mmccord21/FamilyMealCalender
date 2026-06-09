@@ -77,7 +77,7 @@ export default function MealPlannerApp({
       splash.style.opacity = '0';
       setTimeout(() => splash.remove(), 350);
     }
-    if (!localStorage.getItem('fmc_onboarded')) setShowOnboarding(true);
+    if (!localStorage.getItem('tonight_onboarded')) setShowOnboarding(true);
   }, []);
 
   useEffect(() => {
@@ -417,7 +417,7 @@ export default function MealPlannerApp({
       <OnboardingModal
         open={showOnboarding}
         onDone={() => {
-          localStorage.setItem('fmc_onboarded', '1');
+          localStorage.setItem('tonight_onboarded', '1');
           setShowOnboarding(false);
         }}
       />

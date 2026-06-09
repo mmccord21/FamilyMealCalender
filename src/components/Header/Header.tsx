@@ -16,7 +16,7 @@ export default function Header({ total }: Props) {
         <span className={styles.mark}>
           <UtensilsCrossed size={16} strokeWidth={2} />
         </span>
-        <span className={styles.wordmark}>Meal Planner</span>
+        <span className={styles.wordmark}>Tonight</span>
       </div>
 
       <div className={styles.right}>

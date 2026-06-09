@@ -1,7 +1,7 @@
 {
-  "name": "Family Meal Planner",
-  "short_name": "Meal Plan",
-  "description": "Plan your family's weekly meals, manage recipes, and build your shopping list.",
+  "name": "Tonight",
+  "short_name": "Tonight",
+  "description": "Stop guessing. Tonight tells you what's for dinner — plan meals, build your grocery list, and get your week sorted.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

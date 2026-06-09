@@ -12,8 +12,8 @@ interface Props {
 const STEPS = [
   {
     icon: <ChefHat size={48} strokeWidth={1.25} />,
-    title: 'Welcome to Family Meal Planner',
-    body: "Plan your family's meals for the week, build a smart grocery list, and never wonder 'what's for dinner?' again.",
+    title: 'Welcome to Tonight',
+    body: "Stop guessing what's for dinner. Plan your week, build a smart grocery list, and walk into every evening with a plan.",
   },
   {
     icon: <BookOpen size={48} strokeWidth={1.25} />,

@@ -15,7 +15,7 @@ export default function Loading() {
           </g>
         </svg>
       </div>
-      <p className={styles.title}>Family Meal Planner</p>
+      <p className={styles.title}>Tonight</p>
       <p className={styles.sub}>Loading your week…</p>
       <div className={styles.dots}>
         <span />

@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function TabHint({ tabKey, icon, message }: Props) {
-  const storageKey = `fmc_hint_${tabKey}`;
+  const storageKey = `tonight_hint_${tabKey}`;
   const [visible, setVisible] = useState(false);
   const [hiding, setHiding] = useState(false);
 

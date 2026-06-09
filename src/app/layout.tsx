@@ -11,13 +11,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Family Meal Planner",
-  description: "Plan your family's weekly meals, manage recipes, and build your shopping list.",
+  title: "Tonight",
+  description: "Stop guessing. Tonight tells you what's for dinner — plan meals, build your grocery list, and get your week sorted.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Meal Plan",
+    title: "Tonight",
   },
 };
 
@@ -36,7 +36,7 @@ export default function RootLayout({
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-          <meta name="apple-mobile-web-app-title" content="Meal Plan" />
+          <meta name="apple-mobile-web-app-title" content="Tonight" />
           <link rel="apple-touch-icon" href="/apple-icon" />
         </head>
         <body>
@@ -63,7 +63,7 @@ export default function RootLayout({
               </g>
             </svg>
             <div style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 600, color: '#2C1810', letterSpacing: '-0.01em' }}>
-              Family Meal Planner
+              Tonight
             </div>
             <div style={{ fontFamily: 'sans-serif', fontSize: '12px', color: '#9B8B7B', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
               Loading your week…

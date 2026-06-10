@@ -97,11 +97,79 @@
 
 .expand {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 4px 10px;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 4px 10px;
   border-top: 1px solid var(--bdr);
 }
+
+.mealConfigRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 6px;
+  flex-wrap: wrap;
+}
+
+.mealTypeChips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.mealTypeChip {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--bdr);
+  background: var(--bg);
+  color: var(--mu);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  white-space: nowrap;
+}
+.mealTypeChipActive {
+  background: rgba(181, 82, 42, 0.1);
+  color: var(--terra);
+  border-color: var(--terra);
+}
+
+.shopToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--bdr);
+  background: var(--bg);
+  color: var(--mu);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.shopToggleOn {
+  background: rgba(74, 122, 82, 0.1);
+  color: var(--sage);
+  border-color: var(--sage);
+}
+
+.servingsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--bdr);
+}
+
 .expandLbl {
   font-size: 12px;
   color: var(--mu);

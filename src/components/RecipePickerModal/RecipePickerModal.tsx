@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, SearchX, Minus, Plus, Check, UtensilsCrossed } from 'lucide-react';
+import { Search, SearchX, Minus, Plus, Check, ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import Modal from '@/components/Modal/Modal';
 import type { Recipe } from '@/types';
 import styles from './RecipePickerModal.module.css';
@@ -9,9 +9,12 @@ import styles from './RecipePickerModal.module.css';
 interface Props {
   open: boolean;
   recipes: Recipe[];
+  showMealConfig?: boolean;
   onClose: () => void;
-  onSelect: (id: string, servings: number) => void;
+  onSelect: (id: string, servings: number, mealType: string, includeInShopping: boolean) => void;
 }
+
+const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 
 function tagColor(tag: string): string {
   if (tag === 'keto') return '#3A6B42';
@@ -19,16 +22,20 @@ function tagColor(tag: string): string {
   return '#B5522A';
 }
 
-export default function RecipePickerModal({ open, recipes, onClose, onSelect }: Props) {
+export default function RecipePickerModal({ open, recipes, showMealConfig, onClose, onSelect }: Props) {
   const [query, setQuery] = useState('');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [pendingServings, setPendingServings] = useState(4);
+  const [mealType, setMealType] = useState('Dinner');
+  const [includeInShopping, setIncludeInShopping] = useState(true);
 
   useEffect(() => {
     if (open) {
       setActiveTag(null);
       setExpandedId(null);
+      setMealType('Dinner');
+      setIncludeInShopping(true);
     }
   }, [open]);
 
@@ -51,7 +58,7 @@ export default function RecipePickerModal({ open, recipes, onClose, onSelect }: 
   };
 
   const handleAdd = (id: string) => {
-    onSelect(id, pendingServings);
+    onSelect(id, pendingServings, mealType, includeInShopping);
     onClose();
     setQuery('');
     setExpandedId(null);
@@ -114,27 +121,52 @@ export default function RecipePickerModal({ open, recipes, onClose, onSelect }: 
               </div>
               {expandedId === r.id && (
                 <div className={styles.expand}>
-                  <span className={styles.expandLbl}>Servings</span>
-                  <div className={styles.stepper}>
-                    <button
-                      className={styles.stepBtn}
-                      onClick={(e) => { e.stopPropagation(); setPendingServings(Math.max(1, pendingServings - 1)); }}
-                      aria-label="Fewer servings"
-                    >
-                      <Minus size={13} strokeWidth={2.5} />
-                    </button>
-                    <span className={styles.stepNum}>{pendingServings}</span>
-                    <button
-                      className={styles.stepBtn}
-                      onClick={(e) => { e.stopPropagation(); setPendingServings(pendingServings + 1); }}
-                      aria-label="More servings"
-                    >
-                      <Plus size={13} strokeWidth={2.5} />
+                  {showMealConfig && (
+                    <div className={styles.mealConfigRow}>
+                      <div className={styles.mealTypeChips}>
+                        {MEAL_TYPES.map((t) => (
+                          <button
+                            key={t}
+                            className={`${styles.mealTypeChip} ${mealType === t ? styles.mealTypeChipActive : ''}`}
+                            onClick={(e) => { e.stopPropagation(); setMealType(t); }}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className={`${styles.shopToggle} ${includeInShopping ? styles.shopToggleOn : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setIncludeInShopping((v) => !v); }}
+                        aria-label={includeInShopping ? 'Remove from shopping list' : 'Add to shopping list'}
+                      >
+                        <ShoppingCart size={13} strokeWidth={2} />
+                        <span>{includeInShopping ? 'In list' : 'Add to list'}</span>
+                      </button>
+                    </div>
+                  )}
+                  <div className={styles.servingsRow}>
+                    <span className={styles.expandLbl}>Servings</span>
+                    <div className={styles.stepper}>
+                      <button
+                        className={styles.stepBtn}
+                        onClick={(e) => { e.stopPropagation(); setPendingServings(Math.max(1, pendingServings - 1)); }}
+                        aria-label="Fewer servings"
+                      >
+                        <Minus size={13} strokeWidth={2.5} />
+                      </button>
+                      <span className={styles.stepNum}>{pendingServings}</span>
+                      <button
+                        className={styles.stepBtn}
+                        onClick={(e) => { e.stopPropagation(); setPendingServings(pendingServings + 1); }}
+                        aria-label="More servings"
+                      >
+                        <Plus size={13} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                    <button className={styles.addBtn} onClick={() => handleAdd(r.id)}>
+                      <Check size={14} strokeWidth={2.5} /> Add
                     </button>
                   </div>
-                  <button className={styles.addBtn} onClick={() => handleAdd(r.id)}>
-                    <Check size={14} strokeWidth={2.5} /> Add
-                  </button>
                 </div>
               )}
             </div>

@@ -203,6 +203,10 @@ export default function MealPlannerApp({
               await store.markMealCooked(dayMealId);
               showToast('Meal cooked ✓ Pantry updated');
             }}
+            onUnmarkCooked={async (dayMealId) => {
+              await store.unmarkMealCooked(dayMealId);
+              showToast('Marked as not cooked');
+            }}
           />
         </div>
         )}
@@ -334,24 +338,27 @@ export default function MealPlannerApp({
       <RecipePickerModal
         open={pickerOpen}
         recipes={store.recipes}
+        showMealConfig={pickerIsQuickAdd}
         onClose={() => {
           setPickerOpen(false);
           setPickerForMealId(null);
           setPickerIsQuickAdd(false);
           setEditRecurKey(null);
         }}
-        onSelect={async (id, servings) => {
+        onSelect={async (id, servings, mealType, includeInShopping) => {
           if (pickerForMealId) {
-            store.addRecipeToDayMeal(pickerForMealId, id);
+            const dmr = await store.addRecipeToDayMeal(pickerForMealId, id);
             store.updateDayMeal(pickerForMealId, { guests: servings });
+            if (!includeInShopping) store.updateDayMealRecipe(pickerForMealId, dmr.id, { includeInShopping: false });
             showToast('Recipe added ✓');
           } else if (editRecurKey) {
             store.saveRecurring(editRecurKey, id);
             showToast('Updated ✓');
           } else if (pickerIsQuickAdd) {
-            const meal = await store.addDayMeal(editDayKey, 'Dinner');
-            store.addRecipeToDayMeal(meal.id, id);
+            const meal = await store.addDayMeal(editDayKey, mealType);
+            const dmr = await store.addRecipeToDayMeal(meal.id, id);
             if (servings !== BASE_GUESTS) store.updateDayMeal(meal.id, { guests: servings });
+            if (!includeInShopping) store.updateDayMealRecipe(meal.id, dmr.id, { includeInShopping: false });
             showToast('Added to plan ✓');
           }
           setPickerOpen(false);

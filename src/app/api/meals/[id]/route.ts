@@ -21,6 +21,7 @@ export async function PATCH(
       ...(body.guests !== undefined && { guests: body.guests }),
       ...(body.note !== undefined && { note: body.note }),
       ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
+      ...('cookedAt' in body && { cookedAt: body.cookedAt ?? null }),
     },
     include: { recipes: { orderBy: { sortOrder: 'asc' } } },
   });

@@ -27,6 +27,7 @@ interface MealState {
   updatePantryQty: (name: string, qty: number, unit: string) => Promise<void>;
   removePantryItem: (name: string) => Promise<void>;
   markMealCooked: (dayMealId: string) => Promise<void>;
+  unmarkMealCooked: (dayMealId: string) => Promise<void>;
   setWeekOffset: (delta: number) => void;
   fetchStores: () => Promise<void>;
   addStore: (name: string) => Promise<void>;
@@ -175,6 +176,17 @@ export const useMealStore = create<MealState>((set, get) => ({
         pantryItems,
       }));
     }
+  },
+
+  unmarkMealCooked: async (dayMealId) => {
+    set((state) => ({
+      dayMeals: state.dayMeals.map((m) => m.id === dayMealId ? { ...m, cookedAt: null } : m),
+    }));
+    await fetch(`/api/meals/${dayMealId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cookedAt: null }),
+    });
   },
 
   setWeekOffset: (delta) => {

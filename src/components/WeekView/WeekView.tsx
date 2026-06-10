@@ -25,6 +25,7 @@ interface Props {
   onApplyTemplate: (id: string) => void;
   onDeleteTemplate: (id: string) => void;
   onMarkCooked: (dayMealId: string) => void;
+  onUnmarkCooked: (dayMealId: string) => void;
   onGoToRecipes: () => void;
 }
 
@@ -36,7 +37,7 @@ export default function WeekView({
   recipes, dayMeals, recurring, weekOffset, loading = false, templates,
   onShiftWeek, onOpenDay, onViewRecipe, onOpenRecurring, onCopyWeek,
   onAddRecurring, onDeleteRecurring, onRenameRecurring,
-  onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked, onGoToRecipes,
+  onSaveTemplate, onApplyTemplate, onDeleteTemplate, onMarkCooked, onUnmarkCooked, onGoToRecipes,
 }: Props) {
   const [showOverflow, setShowOverflow] = useState(false);
   const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
@@ -346,11 +347,11 @@ export default function WeekView({
 
                 <button
                   className={`${styles.mealCardAction} ${meal.cookedAt ? styles.mealCardActionDone : ''}`}
-                  aria-label={meal.cookedAt ? 'Cooked' : firstRecipe ? 'Mark as cooked' : 'Add recipe'}
+                  aria-label={meal.cookedAt ? 'Mark as not cooked' : firstRecipe ? 'Mark as cooked' : 'Add recipe'}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (meal.cookedAt) return;
-                    if (firstRecipe) onMarkCooked(meal.id);
+                    if (meal.cookedAt) onUnmarkCooked(meal.id);
+                    else if (firstRecipe) onMarkCooked(meal.id);
                     else onOpenDay(selectedKey, selectedIdx);
                   }}
                 >

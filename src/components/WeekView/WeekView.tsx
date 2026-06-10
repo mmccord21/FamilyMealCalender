@@ -43,10 +43,19 @@ export default function WeekView({
   const [templateName, setTemplateName] = useState('');
   const overflowRef = useRef<HTMLDivElement>(null);
 
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const fetchedIds = useRef<Set<string>>(new Set());
+
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
   const [showAddInput, setShowAddInput] = useState(false);
   const [addLabel, setAddLabel] = useState('');
+
+  const dates = getWeekDates(weekOffset);
+  const [selectedIdx, setSelectedIdx] = useState<number>(() => {
+    const t = dates.findIndex((d) => isToday(d));
+    return t >= 0 ? t : 0;
+  });
 
   useEffect(() => {
     if (!showOverflow && !showTemplatesPanel) return;
@@ -59,6 +68,25 @@ export default function WeekView({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showOverflow, showTemplatesPanel]);
+
+  useEffect(() => {
+    const missing = recipes.filter((r) => !r.imageUrl && !fetchedIds.current.has(r.id));
+    missing.forEach((r) => {
+      fetchedIds.current.add(r.id);
+      fetch(`/api/meal-image?q=${encodeURIComponent(r.name)}`)
+        .then((res) => res.json())
+        .then(({ url }: { url: string | null }) => {
+          if (url) setImageUrls((prev) => ({ ...prev, [r.id]: url }));
+        })
+        .catch(() => {});
+    });
+  }, [recipes]);
+
+  useEffect(() => {
+    const newDates = getWeekDates(weekOffset);
+    const t = newDates.findIndex((d) => isToday(d));
+    setSelectedIdx(t >= 0 ? t : 0);
+  }, [weekOffset]);
 
   function commitSaveTemplate() {
     const trimmed = templateName.trim();
@@ -80,7 +108,6 @@ export default function WeekView({
     { label: 'Copy from 3 weeks ago', ...relWeek(-3) },
   ];
 
-  const dates = getWeekDates(weekOffset);
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const weekRange = `${fmt(dates[0])} – ${fmt(dates[6])}`;
   const weekContext =
@@ -108,6 +135,23 @@ export default function WeekView({
       setShowAddInput(false);
     }
   }
+
+  function slotTime(name: string): string | null {
+    const n = name.toLowerCase();
+    if (n.includes('breakfast')) return '8:00 AM';
+    if (n.includes('brunch')) return '10:30 AM';
+    if (n.includes('lunch')) return '12:30 PM';
+    if (n.includes('snack')) return '3:00 PM';
+    if (n.includes('dinner') || n.includes('supper')) return '6:30 PM';
+    return null;
+  }
+
+  const selectedKey = DAY_KEYS[selectedIdx];
+  const selectedDate = dates[selectedIdx];
+  const isSelectedToday = isToday(selectedDate);
+  const selectedDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const menuHeading = isSelectedToday ? "Today's Menu" : `${selectedDayName}'s Menu`;
+  const selectedMeals = mealMap[selectedKey] ?? [];
 
   return (
     <div className={styles.view}>
@@ -210,125 +254,132 @@ export default function WeekView({
         </div>
       )}
 
-      <div className={styles.overview}>
+      <div className={styles.dayPicker}>
         {DAY_KEYS.map((key, i) => {
           const d = dates[i];
           const today = isToday(d);
-          const meals = mealMap[key] ?? [];
-          const firstRecipeId = meals.flatMap((m) => m.recipes)[0]?.recipeId;
-          const firstRecipe = firstRecipeId ? recipes.find((r) => r.id === firstRecipeId) : null;
+          const selected = i === selectedIdx;
+          const hasMeals = (mealMap[key] ?? []).some((m) => m.recipes.length > 0);
           return (
             <button
               key={key}
-              className={`${styles.ovDay} ${today ? styles.ovToday : ''}`}
-              onClick={() => onOpenDay(key, i)}
-              aria-label={`${key} ${d.getDate()}`}
+              className={[
+                styles.dayPickerBtn,
+                today ? styles.dayPickerToday : '',
+                selected && !today ? styles.dayPickerSelected : '',
+              ].join(' ')}
+              onClick={() => setSelectedIdx(i)}
+              aria-label={`${DAY_ABBR[key]} ${d.getDate()}`}
             >
-              <span className={styles.ovLetter}>{key[0]}</span>
-              <span
-                className={styles.ovDot}
-                style={firstRecipe ? { background: firstRecipe.color, borderColor: firstRecipe.color } : undefined}
-              />
+              <span className={styles.dayPickerAbbr}>{DAY_ABBR[key].slice(0, 3)}</span>
+              <span className={styles.dayPickerNum}>{d.getDate()}</span>
+              {hasMeals && !selected && <span className={styles.dayPickerDot} />}
             </button>
           );
         })}
       </div>
 
-      <div className={styles.cal}>
-        {DAY_KEYS.map((key, i) => {
-          const d = dates[i];
-          const today = isToday(d);
+      <section className={styles.todaySection}>
+        <h2 className={styles.todayHeading}>{menuHeading}</h2>
 
-          if (loading) {
+        {loading ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={styles.mealCard}>
+                <div className={styles.mealCardPhoto}><div className={styles.skelPhoto} /></div>
+                <div className={styles.mealCardContent}>
+                  <div className={styles.skelLine} style={{ width: '40%', marginBottom: 6 }} />
+                  <div className={styles.skelLine} style={{ width: '70%' }} />
+                  <div className={styles.skelLine} style={{ width: '30%', marginTop: 4 }} />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : selectedMeals.length > 0 ? (
+          selectedMeals.map((meal) => {
+            const mealRecipes = meal.recipes
+              .map((dmr) => recipes.find((r) => r.id === dmr.recipeId))
+              .filter((r): r is Recipe => !!r);
+            const firstRecipe = mealRecipes[0] ?? null;
+            const photo = firstRecipe
+              ? (firstRecipe.imageUrl || imageUrls[firstRecipe.id] || null)
+              : null;
+            const time = slotTime(meal.name);
+
             return (
-              <div key={key} className={`${styles.dayRow} ${today ? styles.today : ''}`}>
-                <div className={styles.dayBadge}>
-                  <div className={styles.dayAbbr}>{DAY_ABBR[key]}</div>
-                  <div className={styles.dayNum}>{d.getDate()}</div>
+              <div
+                key={meal.id}
+                className={styles.mealCard}
+                onClick={() => firstRecipe
+                  ? onViewRecipe(firstRecipe.id, meal.id, selectedKey, selectedIdx)
+                  : onOpenDay(selectedKey, selectedIdx)
+                }
+              >
+                <div className={styles.mealCardPhoto}>
+                  {photo ? (
+                    <img src={photo} alt={firstRecipe?.name ?? ''} className={styles.mealCardPhotoImg} />
+                  ) : (
+                    <div
+                      className={styles.mealCardPhotoPlaceholder}
+                      style={{ background: firstRecipe ? `${firstRecipe.color}1a` : 'var(--bdr)' }}
+                    >
+                      <UtensilsCrossed
+                        size={26}
+                        strokeWidth={1.5}
+                        style={{ color: firstRecipe?.color ?? 'var(--mu)' }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className={styles.dayContent}>
-                  <div className={styles.skelEmoji} />
-                  <div className={styles.skelBody}>
-                    <div className={styles.skelLine} style={{ width: '55%' }} />
-                    <div className={styles.skelLine} style={{ width: '35%' }} />
-                  </div>
+
+                <div className={styles.mealCardContent}>
+                  <span className={styles.mealCardCategory}>{meal.name}</span>
+                  {firstRecipe ? (
+                    <>
+                      <span className={styles.mealCardName}>{firstRecipe.name}</span>
+                      {time && <span className={styles.mealCardTime}>{time}</span>}
+                    </>
+                  ) : (
+                    <span className={styles.mealCardNoRecipe}>No recipe set</span>
+                  )}
                 </div>
+
+                <button
+                  className={`${styles.mealCardAction} ${meal.cookedAt ? styles.mealCardActionDone : ''}`}
+                  aria-label={meal.cookedAt ? 'Cooked' : firstRecipe ? 'Mark as cooked' : 'Add recipe'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (meal.cookedAt) return;
+                    if (firstRecipe) onMarkCooked(meal.id);
+                    else onOpenDay(selectedKey, selectedIdx);
+                  }}
+                >
+                  {meal.cookedAt || firstRecipe
+                    ? <CheckCircle size={20} strokeWidth={1.75} />
+                    : <Plus size={20} strokeWidth={2} />
+                  }
+                </button>
               </div>
             );
-          }
-
-          const meals = mealMap[key] ?? [];
-          const firstColor = meals
-            .flatMap((m) => m.recipes)
-            .map((dmr) => recipes.find((r) => r.id === dmr.recipeId)?.color)
-            .find(Boolean);
-
-          return (
-            <div
-              key={key}
-              className={`${styles.dayRow} ${today ? styles.today : ''}`}
-              onClick={() => onOpenDay(key, i)}
-            >
-              <div className={styles.dayBadge}>
-                <div className={styles.dayAbbr}>{DAY_ABBR[key]}</div>
-                <div className={styles.dayNum}>{d.getDate()}</div>
-              </div>
-
-              <div className={styles.dayContent}>
-                {meals.length > 0 ? (
-                  <>
-                    {firstColor && <div className={styles.dayAccent} style={{ background: firstColor }} />}
-                    <div className={styles.slotsBody}>
-                      {meals.map((meal) => {
-                        const mealRecipes = meal.recipes
-                          .map((dmr) => recipes.find((r) => r.id === dmr.recipeId))
-                          .filter((r): r is Recipe => !!r);
-                        return (
-                          <div key={meal.id} className={styles.slotRow}>
-                            <div className={styles.slotHeader}>
-                              <span className={styles.slotLabel}>{meal.name}</span>
-                              {mealRecipes.length > 0 && (
-                                <button
-                                  className={`${styles.slotCooked} ${meal.cookedAt ? styles.slotCookedDone : ''}`}
-                                  aria-label={meal.cookedAt ? 'Cooked' : 'Mark as cooked'}
-                                  onClick={(e) => { e.stopPropagation(); if (!meal.cookedAt) onMarkCooked(meal.id); }}
-                                >
-                                  <CheckCircle size={14} strokeWidth={2} />
-                                </button>
-                              )}
-                            </div>
-                            <div className={styles.slotChips}>
-                              {mealRecipes.map((r) => (
-                                <span
-                                  key={r.id}
-                                  className={styles.slotChip}
-                                  style={{ background: `${r.color}1a`, color: r.color }}
-                                  onClick={(e) => { e.stopPropagation(); onViewRecipe(r.id, meal.id, key, i); }}
-                                >
-                                  <span className={styles.slotChipName}>{r.name}</span>
-                                </span>
-                              ))}
-                              {mealRecipes.length === 0 && (
-                                <span className={styles.slotNoRecipe}>No recipe</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <Caret className={styles.arrow} size={18} strokeWidth={2} />
-                  </>
-                ) : (
-                  <div className={styles.emptyBody}>
-                    <div className={styles.plusCircle}><Plus size={16} strokeWidth={2.5} /></div>
-                    <span className={styles.emptyLbl}>Plan your day</span>
-                  </div>
-                )}
-              </div>
+          })
+        ) : (
+          <div className={styles.emptyDayCard}>
+            <div className={styles.emptyDayIcon}>
+              <UtensilsCrossed size={28} strokeWidth={1.5} style={{ color: 'var(--terra)' }} />
             </div>
-          );
-        })}
-      </div>
+            <div className={styles.emptyDayTitle}>Nothing planned yet</div>
+            <div className={styles.emptyDaySub}>Tap below to plan {isSelectedToday ? 'today' : selectedDayName}</div>
+            <button className={styles.emptyDayBtn} onClick={() => onOpenDay(selectedKey, selectedIdx)}>
+              Plan this day
+            </button>
+          </div>
+        )}
+
+        <button className={styles.addMealBtn} onClick={() => onOpenDay(selectedKey, selectedIdx)}>
+          <Plus size={14} strokeWidth={2.5} />
+          Add meal slot
+        </button>
+      </section>
 
       <div className={styles.sectionLbl}>Recurring this week</div>
       <div className={styles.sectionSub}>Meals that repeat week to week, separate from your daily plan</div>

@@ -45,57 +45,286 @@
 .wkBtn:hover { border-color: var(--gold); }
 .wkBtn:active { transform: scale(0.94); background: #fbf5ee; }
 
-/* ── Week Overview Strip ── */
-.overview {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-  background: var(--sur);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r-md);
-  padding: 10px 6px;
-  margin-bottom: var(--sp-3);
-  box-shadow: var(--shadow-sm);
+/* ── Day Picker Strip ── */
+.dayPicker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 4px 0 8px;
+  margin-bottom: var(--sp-2);
 }
 
-.ovDay {
-  flex: 1;
+.dayPickerBtn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
+  gap: 3px;
+  min-height: 56px;
+  padding: 8px 4px;
+  background: var(--sur);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-md);
   cursor: pointer;
-  padding: 8px 0;
-  min-height: 44px;
-  border-radius: var(--r-sm);
   font-family: 'DM Sans', sans-serif;
-  transition: background var(--dur) var(--ease);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  position: relative;
 }
-.ovDay:hover { background: #fcf7f0; }
-.ovDay:active { transform: scale(0.94); }
+.dayPickerBtn:hover { border-color: var(--terra); }
+.dayPickerBtn:active { transform: scale(0.94); }
 
-.ovLetter {
-  font-size: 10px;
+.dayPickerAbbr {
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--mu);
   transition: color var(--dur) var(--ease);
 }
 
-.ovDot {
-  width: 9px;
-  height: 9px;
+.dayPickerNum {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--br);
+  line-height: 1;
+  transition: color var(--dur) var(--ease);
+}
+
+.dayPickerDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--terra);
+  opacity: 0.5;
+}
+
+/* Today state */
+.dayPickerToday {
+  background: var(--terra);
+  border-color: var(--terra);
+  box-shadow: 0 2px 8px rgba(181, 82, 42, 0.3);
+}
+.dayPickerToday .dayPickerAbbr { color: rgba(255,255,255,0.75); }
+.dayPickerToday .dayPickerNum  { color: #fff; }
+.dayPickerToday .dayPickerDot  { background: #fff; opacity: 0.8; }
+.dayPickerToday:hover { border-color: var(--terra); }
+
+/* Selected (non-today) state */
+.dayPickerSelected {
+  border-color: var(--terra);
+  background: #fff8f5;
+}
+.dayPickerSelected .dayPickerAbbr { color: var(--terra); }
+.dayPickerSelected .dayPickerNum  { color: var(--terra); }
+
+/* ── Today's Menu Section ── */
+.todaySection {
+  margin-bottom: var(--sp-6);
+}
+
+.todayHeading {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--br);
+  text-align: center;
+  margin-bottom: var(--sp-4);
+}
+
+/* ── Meal Card (Stitch style) ── */
+.mealCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--sp-3);
+  cursor: pointer;
+  transition: box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.mealCard:hover { box-shadow: var(--shadow-md); background: #fdfaf6; }
+.mealCard:active { transform: scale(0.99); }
+
+.mealCardPhoto {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bdr);
+}
+
+.mealCardPhotoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mealCardPhotoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skelPhoto {
+  width: 100%;
+  height: 100%;
+  background: var(--bdr);
+  position: relative;
+  overflow: hidden;
+}
+.skelPhoto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.4s var(--ease) infinite;
+}
+
+.mealCardContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mealCardCategory {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--mu);
+}
+
+.mealCardName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--br);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mealCardTime {
+  font-size: 13px;
+  color: var(--mu);
+}
+
+.mealCardNoRecipe {
+  font-size: 13px;
+  color: var(--mu);
+  font-style: italic;
+  opacity: 0.65;
+}
+
+.mealCardAction {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1.5px solid var(--bdr);
-  background: transparent;
-  transition: box-shadow var(--dur) var(--ease);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mu);
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  align-self: center;
 }
-.ovDot[data-note] { border-style: dashed; border-color: var(--gold); }
+.mealCardAction:hover { border-color: var(--terra); color: var(--terra); }
+.mealCardAction:active { transform: scale(0.9); }
+.mealCardActionDone {
+  border-color: var(--sage);
+  color: var(--sage);
+  cursor: default;
+}
+.mealCardActionDone:hover { border-color: var(--sage); color: var(--sage); }
 
-.ovToday .ovLetter { color: var(--terra); }
-.ovToday .ovDot { box-shadow: 0 0 0 2px var(--sur), 0 0 0 3.5px var(--terra); }
+/* ── Empty Day Card ── */
+.emptyDayCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  background: transparent;
+  border: 1.5px dashed var(--bdr);
+  border-radius: var(--r-lg);
+  text-align: center;
+  margin-bottom: var(--sp-3);
+}
+
+.emptyDayIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(181, 82, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-1);
+}
+
+.emptyDayTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--br);
+}
+
+.emptyDaySub {
+  font-size: 13px;
+  color: var(--mu);
+  margin-bottom: var(--sp-1);
+}
+
+.emptyDayBtn {
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--r-pill);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--dur) var(--ease), transform var(--dur) var(--ease);
+  margin-top: var(--sp-1);
+}
+.emptyDayBtn:hover { filter: brightness(1.08); }
+.emptyDayBtn:active { transform: scale(0.96); }
+
+/* ── Add meal button ── */
+.addMealBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  background: none;
+  border: 1.5px dashed var(--bdr);
+  border-radius: var(--r-md);
+  color: var(--mu);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: var(--sp-6);
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.addMealBtn:hover { border-color: var(--terra); color: var(--terra); background: #fff8f5; }
 
 /* ── Day Card List ── */
 .cal {
@@ -155,6 +384,25 @@
 .today .dayAbbr,
 .today .dayNum {
   color: #fff;
+}
+
+/* ── Day Photo Thumbnail ── */
+.dayPhoto {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--bdr);
+  align-self: center;
+  margin-left: 10px;
+}
+
+.dayPhotoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ── Day Content (right side) ── */
@@ -296,10 +544,12 @@
 
 /* ── Skeleton (loading) ── */
 .skelEmoji {
-  width: 34px;
-  height: 34px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--r-sm);
   flex-shrink: 0;
+  align-self: center;
+  margin-left: 10px;
   background: var(--bdr);
   position: relative;
   overflow: hidden;
